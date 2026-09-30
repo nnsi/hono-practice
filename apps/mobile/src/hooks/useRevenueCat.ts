@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useTranslation } from "@packages/i18n";
 import { Platform } from "react-native";
 import type {
   CustomerInfo,
@@ -22,6 +23,8 @@ type RevenueCatState = {
   isLoadingOfferings: boolean;
   isPurchasing: boolean;
   isRestoring: boolean;
+  purchasePending: boolean;
+  pendingMessage: string | null;
   error: string | null;
   purchasePackage: (pkg: PurchasesPackage) => Promise<boolean>;
   restorePurchases: () => Promise<boolean>;
@@ -50,33 +53,49 @@ export function handleCustomerInfoUpdate(
   return true;
 }
 
-export type PurchaseResult = { ok: boolean; userCancelled: boolean };
+export type PurchaseResult = {
+  ok: boolean;
+  userCancelled: boolean;
+  pending?: boolean;
+};
 
 export async function executePurchase(
   pkg: PurchasesPackage,
 ): Promise<PurchaseResult> {
   try {
     await Purchases.purchasePackage(pkg);
-    const reconciled = await reconcilePlanFromBackend("premium");
-    return { ok: reconciled, userCancelled: false };
   } catch (e: unknown) {
     const err = e as { userCancelled?: boolean };
     return { ok: false, userCancelled: err.userCancelled === true };
   }
+  // The store has accepted payment. A delayed webhook or network failure must
+  // never invite the customer to pay again. Backend state still gates access.
+  const reconciled = await reconcilePlanFromBackend("premium").catch(
+    () => false,
+  );
+  return reconciled
+    ? { ok: true, userCancelled: false }
+    : { ok: false, userCancelled: false, pending: true };
 }
 
-export async function executeRestore(): Promise<boolean> {
+export async function executeRestore(): Promise<{
+  ok: boolean;
+  pending?: boolean;
+}> {
   try {
     const info = await Purchases.restorePurchases();
     const expectedPlan = info.entitlements.active.premium ? "premium" : "free";
-    return reconcilePlanFromBackend(expectedPlan);
+    const ok = await reconcilePlanFromBackend(expectedPlan);
+    return { ok, pending: !ok && expectedPlan === "premium" };
   } catch {
-    return false;
+    return { ok: false };
   }
 }
 
 export function useRevenueCat(): RevenueCatState {
   const { userId } = useAuthContext();
+  const { t } = useTranslation("settings");
+  const [purchasePending, setPurchasePending] = useState(false);
   const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
   const [isLoadingOfferings, setIsLoadingOfferings] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
@@ -86,6 +105,7 @@ export function useRevenueCat(): RevenueCatState {
   const lastEntitlementActiveRef = useRef<boolean | null>(null);
 
   useEffect(() => {
+    setPurchasePending(false);
     if (!userId || Platform.OS === "web" || initializedRef.current) return;
     initializedRef.current = true;
     initRevenueCat(userId).catch(() => {
@@ -125,7 +145,8 @@ export function useRevenueCat(): RevenueCatState {
       setError(null);
       try {
         const result = await executePurchase(pkg);
-        if (!result.ok && !result.userCancelled) {
+        setPurchasePending(result.pending === true);
+        if (!result.ok && !result.userCancelled && !result.pending) {
           setError("購入に失敗しました。もう一度お試しください");
         }
         return result.ok;
@@ -140,9 +161,11 @@ export function useRevenueCat(): RevenueCatState {
     setIsRestoring(true);
     setError(null);
     try {
-      const ok = await executeRestore();
-      if (!ok) setError("購入の復元に失敗しました");
-      return ok;
+      const result = await executeRestore();
+      if (result.ok) setPurchasePending(false);
+      if (result.pending) setPurchasePending(true);
+      if (!result.ok && !result.pending) setError("購入の復元に失敗しました");
+      return result.ok;
     } finally {
       setIsRestoring(false);
     }
@@ -153,6 +176,8 @@ export function useRevenueCat(): RevenueCatState {
     isLoadingOfferings,
     isPurchasing,
     isRestoring,
+    purchasePending,
+    pendingMessage: purchasePending ? t("purchasePending") : null,
     error,
     purchasePackage,
     restorePurchases,

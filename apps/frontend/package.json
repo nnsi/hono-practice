@@ -24,7 +24,7 @@
     "dayjs": "^1.11.21",
     "dexie": "^4.4.4",
     "dexie-react-hooks": "^4.4.0",
-    "hono": "4.12.27",
+    "hono": "4.13.5",
     "i18next": "^26.3.4",
     "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^1.23.0",

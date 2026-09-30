@@ -83,6 +83,7 @@ describe("RevenueCat webhook event handling", () => {
           status: "active",
           paymentProvider: "revenuecat",
           eventType: "RENEWAL",
+          cancelAtPeriodEnd: false,
         }),
       );
     });

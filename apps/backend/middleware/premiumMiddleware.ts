@@ -2,7 +2,10 @@ import type { MiddlewareHandler } from "hono";
 
 import type { AppContext } from "@backend/context";
 import { UnauthorizedError } from "@backend/error";
+import { newRevenueCatSubscriptionQueryService } from "@backend/feature/subscription/revenueCatSubscriptionQueryService";
 import { newSubscriptionRepository } from "@backend/feature/subscription/subscriptionRepository";
+import { newSubscriptionQueryUsecase } from "@backend/feature/subscription/subscriptionUsecase";
+import { noopTracer } from "@backend/lib/tracer";
 
 import { mockPremiumMiddleware } from "./mockPremiumMiddleware";
 
@@ -19,7 +22,11 @@ const prodPremiumMiddleware: MiddlewareHandler<AppContext> = async (
 
   const db = c.env.DB;
   const subscriptionRepo = newSubscriptionRepository(db);
-  const subscription = await subscriptionRepo.findSubscriptionByUserId(userId);
+  const subscription = await newSubscriptionQueryUsecase(
+    subscriptionRepo,
+    c.get("tracer") ?? noopTracer,
+    newRevenueCatSubscriptionQueryService(c.env),
+  ).getSubscriptionByUserIdOrDefault(userId);
 
   if (!subscription) {
     throw new UnauthorizedError(

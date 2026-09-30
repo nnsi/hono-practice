@@ -7,7 +7,10 @@ type RevenueCatEvent = {
   app_user_id: string;
   id: string;
   original_transaction_id?: string;
-  expiration_at_ms?: number;
+  expiration_at_ms?: number | null;
+  grace_period_expiration_at_ms?: number | null;
+  entitlement_ids?: string[] | null;
+  cancel_reason?: string | null;
   event_timestamp_ms: number;
 };
 
@@ -16,25 +19,49 @@ export async function handleRevenueCatEvent(
   commandUc: SubscriptionCommandUsecase,
   logger: Logger,
 ): Promise<void> {
+  // Only the entitlement used by both clients can grant or revoke this plan.
+  if (!event.entitlement_ids?.includes("premium")) {
+    logger.warn("revenuecat_entitlement_skipped", { webhookId: event.id });
+    return;
+  }
   const userId = event.app_user_id;
   const providerId = event.original_transaction_id ?? event.id;
-  const expirationDate = event.expiration_at_ms
-    ? new Date(event.expiration_at_ms)
+  const periodEnd = Math.max(
+    event.expiration_at_ms ?? Number.NEGATIVE_INFINITY,
+    event.grace_period_expiration_at_ms ?? Number.NEGATIVE_INFINITY,
+  );
+  const expirationDate = Number.isFinite(periodEnd)
+    ? new Date(periodEnd)
     : undefined;
   const ordering = {
     eventOccurredAt: new Date(event.event_timestamp_ms),
     eventSequence: event.id,
   };
 
+  // BILLING_ISSUE carries the grace deadline. Its companion cancellation
+  // must not shorten that deadline when deliveries arrive in either order.
+  if (
+    event.type === "CANCELLATION" &&
+    event.cancel_reason === "BILLING_ERROR"
+  ) {
+    return;
+  }
+
   switch (event.type) {
     case "INITIAL_PURCHASE":
-    case "RENEWAL": {
+    case "RENEWAL":
+    case "SUBSCRIPTION_EXTENDED":
+    case "REFUND_REVERSED": {
       await commandUc.upsertSubscriptionFromPayment({
         userId,
         plan: "premium",
         status: "active",
         paymentProvider: "revenuecat",
         paymentProviderId: providerId,
+        cancelAtPeriodEnd:
+          event.type === "INITIAL_PURCHASE" || event.type === "RENEWAL"
+            ? false
+            : undefined,
         currentPeriodEnd: expirationDate,
         eventType: event.type,
         webhookId: event.id,
@@ -51,7 +78,9 @@ export async function handleRevenueCatEvent(
         status: "active",
         paymentProvider: "revenuecat",
         paymentProviderId: providerId,
-        cancelAtPeriodEnd: true,
+        // A refund does not necessarily disable renewal in the store.
+        cancelAtPeriodEnd:
+          event.cancel_reason === "CUSTOMER_SUPPORT" ? undefined : true,
         currentPeriodEnd: expirationDate,
         eventType: event.type,
         webhookId: event.id,
@@ -74,12 +103,13 @@ export async function handleRevenueCatEvent(
       break;
     }
 
-    // BILLING_ISSUE: payment failed, entitlement is suspended
+    // A failed charge does not revoke the paid period or billing grace period.
     case "BILLING_ISSUE": {
       await commandUc.upsertSubscriptionFromPayment({
         userId,
-        plan: "free",
-        status: "paused",
+        plan: "premium",
+        status: "active",
+        currentPeriodEnd: expirationDate,
         paymentProvider: "revenuecat",
         paymentProviderId: providerId,
         eventType: event.type,

@@ -1,5 +1,7 @@
 import type { Next } from "hono";
 
+import { newRevenueCatSubscriptionQueryService } from "@backend/feature/subscription/revenueCatSubscriptionQueryService";
+import { newSubscriptionQueryUsecase } from "@backend/feature/subscription/subscriptionUsecase";
 import { createUserId } from "@packages/domain/user/userSchema";
 
 import type { HonoContext } from "../context";
@@ -46,8 +48,11 @@ export async function apiKeyAuthMiddleware(c: HonoContext, next: Next) {
     }
 
     const subscriptionRepository = newSubscriptionRepository(db);
-    const subscription =
-      await subscriptionRepository.findSubscriptionByUserId(userId);
+    const subscription = await newSubscriptionQueryUsecase(
+      subscriptionRepository,
+      tracer,
+      newRevenueCatSubscriptionQueryService(c.env),
+    ).getSubscriptionByUserIdOrDefault(userId);
     if (!subscription?.canUseApiKey()) {
       throw new UnauthorizedError("Premium subscription required");
     }

@@ -103,7 +103,7 @@ export function StatusBar({
   variant,
 }: {
   message: string;
-  variant: "success" | "error";
+  variant: "success" | "error" | "info";
 }) {
   const isSuccess = variant === "success";
   return (
@@ -111,7 +111,9 @@ export function StatusBar({
       className={`mx-4 mb-4 border rounded-xl p-4 ${
         isSuccess
           ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
-          : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+          : variant === "info"
+            ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+            : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
       }`}
       testID={mobileTestIdsExt.upgrade.statusBar}
     >
@@ -119,7 +121,9 @@ export function StatusBar({
         className={`text-sm text-center ${
           isSuccess
             ? "text-green-700 dark:text-green-400 font-medium"
-            : "text-red-700 dark:text-red-400"
+            : variant === "info"
+              ? "text-blue-700 dark:text-blue-400"
+              : "text-red-700 dark:text-red-400"
         }`}
       >
         {message}

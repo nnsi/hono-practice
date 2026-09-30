@@ -1,5 +1,7 @@
 # Actiko モバイルアプリ ストアリリース チェックリスト
 
+> 2026-10-01の進捗・残件は[現在のリリース状況](../release/current-status.md)を参照。以下の過去の検証結果を現在の全環境の完了証跡として扱わない。
+
 > 対象: `apps/mobile` (Expo SDK 57, Managed Workflow)
 > Bundle ID: `$BUNDLE_ID` (iOS / Android 共通、`.env` で設定)
 

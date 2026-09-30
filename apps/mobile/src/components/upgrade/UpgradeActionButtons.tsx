@@ -12,6 +12,7 @@ import { mobileTestIdsExt } from "../../testing/testIdsExt";
 export function UpgradeActionButtons({
   plan,
   isPurchasing,
+  purchasePending,
   isRestoring,
   isLoadingOfferings,
   hasPackage,
@@ -20,6 +21,7 @@ export function UpgradeActionButtons({
 }: {
   plan: string;
   isPurchasing: boolean;
+  purchasePending: boolean;
   isRestoring: boolean;
   isLoadingOfferings: boolean;
   hasPackage: boolean;
@@ -29,7 +31,11 @@ export function UpgradeActionButtons({
   const isWeb = Platform.OS === "web";
   const isPremium = plan === "premium";
   const disabled =
-    isPurchasing || isRestoring || isLoadingOfferings || !hasPackage;
+    isPurchasing ||
+    purchasePending ||
+    isRestoring ||
+    isLoadingOfferings ||
+    !hasPackage;
 
   return (
     <View className="px-4 gap-3">
@@ -71,7 +77,7 @@ export function UpgradeActionButtons({
         <TouchableOpacity
           className="items-center py-3"
           onPress={onRestore}
-          disabled={isRestoring}
+          disabled={isRestoring || isPurchasing}
           accessibilityRole="button"
           accessibilityLabel="購入を復元"
           testID={mobileTestIdsExt.upgrade.restoreButton}
