@@ -6,7 +6,7 @@
 
 ユーザーは今回の依存更新・RevenueCat修正・規約修正についてPRのマージとリリースを依頼済み。既存の `master → release` とGitHub ActionsによるWeb / API / Admin / Tail Workerの配信を進める。ストア公開の承認・完了を意味しない。iOSのストア設定・審査準備はユーザー判断で後回し。Mobileへの検証用Test Storeキー・ローカルAPIのOTA配信は行わない。
 
-PR作成前のため、この時点では今回の変更のマージ・本番デプロイは未完了。完了証跡はPRとDeploy Cloudflare runに記録する。
+変更PR: [#281](https://github.com/nnsi/hono-practice/pull/281)。配信は `master → release` のPRとDeploy Cloudflare runで管理する。マージ・デプロイの完了時刻と結果はリンク先のPR/Actionsを正とし、PR作成時の検証完了を本番反映完了とは扱わない。
 
 ## 完了した内容
 
