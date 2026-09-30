@@ -1,5 +1,7 @@
 # Actiko リリース前チェックリスト — コード・リポジトリ内
 
+> 2026-10-01の進捗・残件は[現在のリリース状況](../release/current-status.md)を参照。以下の過去の検証結果を現在の全環境の完了証跡として扱わない。
+
 > 対象: コード、repository内設定、自動テスト、ローカルbuildで完了できる作業
 > 外部作業: [外部サービス・配布チェックリスト](./pre-release-external-checklist.md)
 > 判定根拠: [リリース可否評価レポート](../report/release-readiness-20260713.md)

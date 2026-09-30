@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import { AppError } from "@backend/error";
+import { newRevenueCatSubscriptionQueryService } from "@backend/feature/subscription/revenueCatSubscriptionQueryService";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
@@ -76,6 +77,7 @@ export function createUserRoute() {
     const subscriptionUc = newSubscriptionQueryUsecase(
       subscriptionRepo,
       tracer,
+      newRevenueCatSubscriptionQueryService(c.env),
     );
     const uc = newUserUsecase(
       repo,

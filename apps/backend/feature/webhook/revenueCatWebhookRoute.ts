@@ -27,11 +27,18 @@ type RevenueCatWebhookContext = AppContext & {
 const revenueCatEventSchema = z.object({
   event: z.object({
     type: z.string(),
-    app_user_id: z.string(),
+    app_user_id: z.string().optional(),
     product_id: z.string().optional(),
-    expiration_at_ms: z.number().optional(),
+    expiration_at_ms: z.number().int().nonnegative().nullish(),
+    grace_period_expiration_at_ms: z.number().int().nonnegative().nullish(),
+    entitlement_ids: z.array(z.string()).nullish(),
+    cancel_reason: z.string().nullish(),
     event_timestamp_ms: z.number().int().nonnegative(),
-    original_transaction_id: z.string().optional(),
+    environment: z.enum(["SANDBOX", "PRODUCTION"]).optional(),
+    original_transaction_id: z
+      .string()
+      .nullish()
+      .transform((value) => value ?? undefined),
     id: z.string(),
   }),
 });
@@ -80,6 +87,42 @@ export function createRevenueCatWebhookRoute(deps?: {
     const event = parsed.data.event;
     const logger = c.get("logger") ?? noopLogger;
 
+    // Dashboard test deliveries don't represent a purchase and may omit environment.
+    if (event.type === "TEST") {
+      return c.json({ received: true, skipped: "test" }, 200);
+    }
+
+    // Restore policy is "Keep with original App User ID". A transfer requires
+    // reconciliation of both customers; never silently acknowledge one.
+    if (event.type === "TRANSFER") {
+      logger.error("revenuecat_transfer_requires_reconciliation", {
+        webhookId: event.id,
+      });
+      throw new AppError("RevenueCat transfer requires reconciliation", 503);
+    }
+    if (!event.app_user_id) {
+      throw new AppError("RevenueCat app_user_id is required", 400);
+    }
+
+    // Fail closed: preview binaries may use the production API/DB. Never let
+    // their sandbox purchases change real entitlements, even with a valid key.
+    const expectedEnvironment = ["development", "test", "stg"].includes(
+      c.env.NODE_ENV,
+    )
+      ? "SANDBOX"
+      : "PRODUCTION";
+    if (!event.environment) {
+      throw new AppError("RevenueCat event environment is required", 400);
+    }
+    if (event.environment !== expectedEnvironment) {
+      logger.warn("revenuecat_environment_skipped", {
+        webhookId: event.id,
+        environment: event.environment,
+        expectedEnvironment,
+      });
+      return c.json({ received: true, skipped: "environment" }, 200);
+    }
+
     // M5: Anonymous RC user IDs ($RCAnonymousID:xxxx) arrive before the user
     // has called Purchases.logIn(). Passing them to createUserId() causes a
     // DomainValidateError → 400 → infinite RC retry loop. Return 200 early.
@@ -91,7 +134,11 @@ export function createRevenueCatWebhookRoute(deps?: {
       return c.json({ ok: true, skipped: "anonymous" }, 200);
     }
 
-    await handleRevenueCatEvent(event, c.var.commandUc, logger);
+    await handleRevenueCatEvent(
+      { ...event, app_user_id: event.app_user_id },
+      c.var.commandUc,
+      logger,
+    );
 
     return c.json({ received: true }, 200);
   });

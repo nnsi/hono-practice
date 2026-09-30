@@ -6,9 +6,9 @@ export const termsOfServiceTitle = "利用規約";
  * ToS のバージョン識別子（ISO 日付）。同意記録時の version カラムに使用する。
  * ja/en で共通（同一ポリシーの翻訳のため）。ToS 改定時はこの値と effectiveDate を更新する。
  */
-export const termsOfServiceVersion = "2026-05-01";
+export const termsOfServiceVersion = "2026-09-30";
 
-export const termsOfServiceEffectiveDate = "施行日: 2026年5月1日";
+export const termsOfServiceEffectiveDate = "改定日: 2026年9月30日";
 
 export const termsOfServiceSections: LegalSection[] = [
   {
@@ -41,6 +41,7 @@ export const termsOfServiceSections: LegalSection[] = [
     content:
       "本アプリは無料プランと有料プラン（Pro プラン）を提供します。有料プランは月額の自動更新契約であり、解約手続きを行わない限り毎月自動的に更新されます。\n\n" +
       "料金・支払方法・解約方法等の詳細は、アプリ内の購入画面及び特定商取引法に基づく表記をご確認ください。モバイル版（iOS / Android）の課金・解約・返金は、App Store 又は Google Play の定めに従います。\n\n" +
+      "アカウント削除又はアプリのアンインストールを行っても、ストアのサブスクリプションは自動解約されず、課金が継続します。継続課金を止める場合は、アカウント削除前にApp Store又はGoogle Playのサブスクリプション設定で解約してください。購入の復元には購入時と同じActikoアカウントを使用し、別のActikoアカウントへの購入の移管はできません。\n\n" +
       "運営者は、有料プランの料金を変更できるものとします。料金変更を行う場合は、30日前までにアプリ内で通知します。変更後の料金は、通知後最初の更新日から適用されます（既に決済済みの契約期間については、従前の料金が適用されます）。ユーザーは、変更後の料金が適用される更新日までに解約することで、変更後の料金の課金を回避できます。モバイル版については、各ストアの料金変更ポリシー及び同意取得フローに従います。\n\n" +
       "サービスの終了に伴い有料プランを廃止する場合、既に決済済みの契約期間の終了日まではサービスを提供します。運営者の都合により契約期間の終了日より前にサービスの提供が困難となった場合は、未提供期間に相当する料金を返金します。App Store / Google Play のアプリ内課金で購入された場合の返金手続きは、各ストアのポリシーに従います。",
   },

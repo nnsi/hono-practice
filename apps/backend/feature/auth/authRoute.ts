@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 
 import { AppError, UnauthorizedError } from "@backend/error";
+import { newRevenueCatSubscriptionQueryService } from "@backend/feature/subscription/revenueCatSubscriptionQueryService";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
 import { recordAuthDiagnostic } from "@backend/lib/authDiagnostics";
 import { noopLogger } from "@backend/lib/logger";
@@ -77,6 +78,7 @@ export function createAuthRoute(oauthVerifiers: OAuthVerifierMap) {
     const subscriptionUc = newSubscriptionQueryUsecase(
       subscriptionRepo,
       tracer,
+      newRevenueCatSubscriptionQueryService(c.env),
     );
     const userUc = newUserUsecase(
       repo,

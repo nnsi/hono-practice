@@ -7,6 +7,7 @@ import {
 } from "@packages/domain/subscription/subscriptionSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
 
+import type { SubscriptionRenewalQueryService } from "./revenueCatSubscriptionQueryService";
 import type { SubscriptionRepository } from "./subscriptionRepository";
 
 export type SubscriptionQueryUsecase = {
@@ -22,11 +23,55 @@ export type SubscriptionQueryUsecase = {
 export function newSubscriptionQueryUsecase(
   subscriptionRepo: SubscriptionRepository,
   tracer: Tracer,
+  renewalQuery?: SubscriptionRenewalQueryService,
 ): SubscriptionQueryUsecase {
+  const resolvedRepo = {
+    ...subscriptionRepo,
+    findSubscriptionByUserId: async (userId: UserId) => {
+      const stored = await subscriptionRepo.findSubscriptionByUserId(userId);
+      const end = stored?.currentPeriodEnd?.getTime();
+      if (
+        !renewalQuery ||
+        !stored ||
+        stored.paymentProvider !== "revenuecat" ||
+        stored.plan !== "premium" ||
+        stored.status !== "active" ||
+        stored.cancelAtPeriodEnd ||
+        end == null ||
+        end > Date.now() ||
+        (stored.lastEventOccurredAt != null &&
+          end <= stored.lastEventOccurredAt.getTime()) ||
+        Date.now() - end > 5 * 60_000
+      )
+        return stored;
+      const renewedEnd = await tracer.span("ext.revenuecatRenewal", () =>
+        renewalQuery.getRevenueCatPeriodEnd(
+          userId,
+          `${stored.id}:${stored.lastEventSequence}:${end}`,
+        ),
+      );
+      if (!renewedEnd || renewedEnd.getTime() <= Date.now()) return stored;
+      // A cancellation/refund or newer webhook during the lookup wins. Never
+      // persist this snapshot or advance webhook ordering with a synthetic event.
+      const latest = await subscriptionRepo.findSubscriptionByUserId(userId);
+      if (
+        !latest ||
+        latest.id !== stored.id ||
+        latest.updatedAt.getTime() !== stored.updatedAt.getTime() ||
+        latest.lastEventSequence !== stored.lastEventSequence ||
+        latest.currentPeriodEnd?.getTime() !== end ||
+        latest.plan !== stored.plan ||
+        latest.status !== stored.status ||
+        latest.cancelAtPeriodEnd
+      )
+        return latest;
+      return newSubscription({ ...latest, currentPeriodEnd: renewedEnd });
+    },
+  };
   return {
-    getSubscriptionByUserId: getSubscriptionByUserId(subscriptionRepo, tracer),
+    getSubscriptionByUserId: getSubscriptionByUserId(resolvedRepo, tracer),
     getSubscriptionByUserIdOrDefault: getSubscriptionByUserIdOrDefault(
-      subscriptionRepo,
+      resolvedRepo,
       tracer,
     ),
     getSubscriptionByPaymentProviderId: (
@@ -39,7 +84,7 @@ export function newSubscriptionQueryUsecase(
           providerId,
         ),
       ),
-    canUserAccessApiKey: canUserAccessApiKey(subscriptionRepo, tracer),
+    canUserAccessApiKey: canUserAccessApiKey(resolvedRepo, tracer),
   };
 }
 

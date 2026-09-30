@@ -1,0 +1,13 @@
+diff --git a/build/commandUtils/new/projectFiles.js b/build/commandUtils/new/projectFiles.js
+index bd47a746e2a276b4f81b9e63d7724e1da47fbfea..c7dbbf9a37bf67c31d9ae2386680c4aa263c9ba5 100644
+--- a/build/commandUtils/new/projectFiles.js
++++ b/build/commandUtils/new/projectFiles.js
+@@ -11,7 +11,7 @@ const tslib_1 = require("tslib");
+ const eas_json_1 = require("@expo/eas-json");
+ const fs_extra_1 = tslib_1.__importDefault(require("fs-extra"));
+ const path_1 = tslib_1.__importDefault(require("path"));
+-const ts_deepmerge_1 = tslib_1.__importDefault(require("ts-deepmerge"));
++const ts_deepmerge_1 = { default: require("ts-deepmerge").merge };
+ const api_1 = require("../../api");
+ const easCli_1 = require("../../utils/easCli");
+ // Android package names must start with a lowercase letter

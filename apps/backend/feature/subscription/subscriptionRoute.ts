@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import type { AppContext } from "@backend/context";
+import { newRevenueCatSubscriptionQueryService } from "@backend/feature/subscription/revenueCatSubscriptionQueryService";
 import { noopTracer } from "@backend/lib/tracer";
 
 import { checkoutRoute } from "./checkoutRoute";
@@ -21,7 +22,11 @@ export function createSubscriptionRoute() {
     const db = c.env.DB;
     const tracer = c.get("tracer") ?? noopTracer;
     const repo = newSubscriptionRepository(db);
-    const uc = newSubscriptionQueryUsecase(repo, tracer);
+    const uc = newSubscriptionQueryUsecase(
+      repo,
+      tracer,
+      newRevenueCatSubscriptionQueryService(c.env),
+    );
     const h = newSubscriptionHandler(uc);
 
     c.set("h", h);

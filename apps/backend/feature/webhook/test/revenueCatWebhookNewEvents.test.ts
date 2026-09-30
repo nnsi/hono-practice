@@ -9,7 +9,7 @@ import {
 
 describe("RevenueCat webhook — new event types (M1)", () => {
   describe("BILLING_ISSUE", () => {
-    it("sets plan to free and status to paused", async () => {
+    it("keeps the paid period active", async () => {
       const mockUc = createRevenueCatMockCommandUc();
       const app = buildRevenueCatTestApp(mockUc);
       const res = await sendRevenueCatWebhook(
@@ -21,8 +21,8 @@ describe("RevenueCat webhook — new event types (M1)", () => {
       expect(mockUc.upsertSubscriptionFromPayment).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: "rc-user-001",
-          plan: "free",
-          status: "paused",
+          plan: "premium",
+          status: "active",
           paymentProvider: "revenuecat",
           paymentProviderId: "txn-xyz-999",
           eventType: "BILLING_ISSUE",

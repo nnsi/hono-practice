@@ -2,7 +2,7 @@ import type { LegalSection } from "../privacyPolicy";
 
 export const termsOfServiceTitleEn = "Terms of Service";
 
-export const termsOfServiceEffectiveDateEn = "Effective Date: May 1, 2026";
+export const termsOfServiceEffectiveDateEn = "Last revised: September 30, 2026";
 
 export const termsOfServiceSectionsEn: LegalSection[] = [
   {
@@ -31,6 +31,7 @@ export const termsOfServiceSectionsEn: LegalSection[] = [
     content:
       "The Service offers a free plan and a paid plan (\u201cPro plan\u201d). The Pro plan is a monthly auto-renewing subscription. Unless you cancel before the end of the current billing period, your subscription will automatically renew each month. Cancellation takes effect at the end of the current billing period.\n\n" +
       "Mobile subscriptions: Payments are processed through the Apple App Store or Google Play Store. Billing, refunds, and cancellation are governed by the respective store\u2019s terms and policies. You must cancel a mobile subscription through your Apple ID subscription settings (iOS) or Google Play subscription settings (Android); cancellation cannot be performed from within the Service.\n\n" +
+      "Deleting your Actiko account or uninstalling the app does not automatically cancel your store subscription; billing continues. To stop recurring charges, cancel through App Store or Google Play subscription settings before deleting your account. Restore purchases using the same Actiko account used for the purchase. Purchases cannot be transferred to a different Actiko account.\n\n" +
       "Refunds: The Service is a digital product. Refunds for App Store or Google Play purchases are subject to the respective store\u2019s refund policies. For billing issues not covered by the store policies, you may contact us through the support form within 60 days of the disputed charge.\n\n" +
       "Price changes: The Operator may change the Pro plan pricing with at least 30 days\u2019 prior notice within the Service. The new price takes effect on the first renewal date after the notice period. You may cancel before that renewal date to avoid being charged the new price.\n\n" +
       "Service discontinuation: If the Operator voluntarily discontinues the Service, paid subscriptions will remain active until the end of the current billing period, and a pro-rata refund will be issued for any period paid beyond the discontinuation date. No refund is owed where the Service is discontinued due to force majeure, third-party provider failure, legal or regulatory requirements, or your breach of these Terms. If the Operator assigns these Terms to a successor (see Section 16) and the successor continues to provide the Service, no refund obligation arises from the assignment itself.",
@@ -46,7 +47,7 @@ export const termsOfServiceSectionsEn: LegalSection[] = [
       "- Reverse-engineer, decompile, or disassemble any part of the Service, except to the extent expressly permitted by applicable law\n" +
       "- Use automated means (bots, scrapers, etc.) to access the Service without prior written permission\n" +
       "- Interfere with or disrupt the integrity or performance of the Service\n\n" +
-      "Sensitive personal data: The Service is not designed for the storage of sensitive personal data as defined under applicable law (including data concerning health, religious or philosophical beliefs, sexual orientation, political opinions, racial or ethnic origin, genetic or biometric data, or trade union membership \u2014 see GDPR Article 9). You are responsible for the content you enter. If you choose to enter such information (for example, in activity names or memos), you do so at your own risk and provide explicit consent to its processing solely for the purpose of providing the Service to you. You may delete such entries at any time.",
+      "Sensitive personal data: The Service is not designed for the storage of sensitive personal data as defined under applicable law (including data concerning health, religious or philosophical beliefs, sexual orientation, political opinions, racial or ethnic origin, genetic or biometric data, or trade union membership \u2014 see GDPR Article 9). You are responsible for the content you enter. If you choose to enter such information (for example, in activity names or memos), entering the information alone does not constitute explicit consent where such consent is required by law. Please avoid entering sensitive personal data into the optional AI feature. You may delete such entries at any time.",
   },
   {
     title: "7. Intellectual Property",

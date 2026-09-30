@@ -1,5 +1,7 @@
 # Actiko リリース前チェックリスト — 外部サービス・配布
 
+> 2026-10-01の進捗・残件は[現在のリリース状況](../release/current-status.md)を参照。以下の過去の検証結果を現在の全環境の完了証跡として扱わない。
+
 > 対象: 外部dashboard、secret、署名、実課金、クラウドbuild/deploy、実機、ストア申請
 > 前提: [コード・リポジトリ内チェックリスト](./pre-release-code-checklist.md)
 > 関連: [Mobileストアリリースチェックリスト](./mobile-release.md)

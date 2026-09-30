@@ -1,5 +1,7 @@
 # Actiko リリース可否評価レポート
 
+> 2026-10-01の進捗・残件は[現在のリリース状況](../release/current-status.md)を参照。以下の過去の検証結果を現在の全環境の完了証跡として扱わない。
+
 > 評価日: 2026-07-13
 > 対象: `master` (`90a4866b`)
 > 対象領域: Backend API / Web / Admin Web / Mobile / Native Widget / CI・配布設定
