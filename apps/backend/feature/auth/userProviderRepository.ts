@@ -1,5 +1,6 @@
 import { ConflictError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import { hasPostgresErrorCode } from "@backend/infra/rdb/postgresError";
 import { userProviders } from "@infra/drizzle/schema";
 import {
   type Provider,
@@ -30,13 +31,6 @@ function toUserProvider(row: UserProviderRow): UserProvider {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   });
-}
-
-function hasPostgresErrorCode(error: unknown, code: string): boolean {
-  if (!error || typeof error !== "object") return false;
-  if ("code" in error && error.code === code) return true;
-  if (!("cause" in error) || error.cause === error) return false;
-  return hasPostgresErrorCode(error.cause, code);
 }
 
 export type UserProviderRepository<T = QueryExecutor> = {

@@ -178,6 +178,42 @@ describe("userRoute", () => {
     expect((await client.index.$post({ json })).status).toEqual(409);
   });
 
+  it("POST / 同一 loginId の並列登録は 200 が 1 件、残りは 409 (500 なし)", async () => {
+    const route = createUserRoute();
+    const { newHonoWithErrorHandling } = await import(
+      "@backend/lib/honoWithErrorHandling"
+    );
+    const app = newHonoWithErrorHandling().route("/", route);
+    const client = testClient(app, {
+      JWT_SECRET: "test",
+      JWT_AUDIENCE: "test-audience",
+      NODE_ENV: "test",
+      DB: testDB,
+    });
+    const json: Parameters<typeof client.index.$post>[0]["json"] = {
+      loginId: "race-user",
+      password: "testtest",
+      name: "test",
+      consents: {
+        age: true,
+        terms: "2026-05-01",
+        privacy: "2026-05-01",
+      },
+    };
+
+    // 事前チェック (getUserByLoginId) を全員が通過してから INSERT が競合する状況を再現する
+    const responses = await Promise.all(
+      Array.from({ length: 8 }, () => client.index.$post({ json })),
+    );
+    const statuses = responses.map((res) => res.status).sort();
+
+    expect(statuses.filter((status) => status === 200)).toHaveLength(1);
+    expect(statuses.filter((status) => status === 409)).toHaveLength(7);
+    expect(
+      await testDB.select().from(users).where(eq(users.loginId, "race-user")),
+    ).toHaveLength(1);
+  });
+
   describe("tab preference", () => {
     it("GET /me に tabPreference が含まれる", async () => {
       const client = createAuthClient();

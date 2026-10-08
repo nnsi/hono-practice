@@ -320,7 +320,7 @@ describe("ActivityLogUsecase", () => {
                 activityKindId,
                 params,
               ),
-            ).rejects.toThrow("activity not found");
+            ).rejects.toThrow(ResourceNotFoundError);
             return verify(
               acRepo.getActivityByIdAndUserId(userId, activityId),
             ).once();

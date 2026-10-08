@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import type { Tracer } from "@backend/lib/tracer";
 import {
@@ -70,7 +71,9 @@ export function createActivityLogBatch(
 
           const activity = activityMap.get(activityId);
           if (!activity) {
-            throw new Error(`Activity not found: ${params.activityId}`);
+            throw new ResourceNotFoundError(
+              `Activity not found: ${params.activityId}`,
+            );
           }
 
           const activityForLog = { ...activity, kinds: activity.kinds ?? [] };
@@ -81,7 +84,7 @@ export function createActivityLogBatch(
                   (kind) => kind.id === activityKindId,
                 ) ?? null);
           if (activityKindId !== null && activityKind === null) {
-            throw new Error(
+            throw new ResourceNotFoundError(
               `Activity kind not found: ${params.activityKindId}`,
             );
           }

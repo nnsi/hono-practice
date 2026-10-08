@@ -4,6 +4,7 @@ import { DomainValidateError } from "@packages/domain/errors";
 
 import type { AppContext } from "../context";
 import { AIQuotaError, AppError, AuthError, UnauthorizedError } from "../error";
+import { isPostgresUniqueViolation } from "../infra/rdb/postgresError";
 
 export function newHonoWithErrorHandling(): Hono<AppContext> {
   const app = new Hono<AppContext>();
@@ -43,6 +44,12 @@ export function newHonoWithErrorHandling(): Hono<AppContext> {
 
     if (err instanceof SyntaxError) {
       return c.json({ message: "Invalid JSON" }, 400);
+    }
+
+    // 事前チェックをすり抜けた一意制約違反 (競合・クライアント指定 ID の重複) は 409 に分類する。
+    // 制約名は内部構造なので応答に含めない。
+    if (isPostgresUniqueViolation(err)) {
+      return c.json({ message: "conflict" }, 409);
     }
 
     return c.json(

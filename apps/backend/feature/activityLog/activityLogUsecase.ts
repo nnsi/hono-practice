@@ -128,7 +128,7 @@ function createActivityLog(
     const activity = await tracer.span("db.getActivityByIdAndUserId", () =>
       acRepo.getActivityByIdAndUserId(userId, activityId),
     );
-    if (!activity) throw new Error("activity not found");
+    if (!activity) throw new ResourceNotFoundError("activity not found");
 
     const activityForLog = { ...activity, kinds: activity.kinds ?? [] };
     const activityKind =
