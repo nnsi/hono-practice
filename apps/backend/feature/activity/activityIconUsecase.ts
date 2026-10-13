@@ -13,6 +13,14 @@ import type { ActivityRepository } from "./activityRepository";
 
 const ALLOWED_ICON_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+function decodeBase64OrThrow(base64: string): string {
+  try {
+    return atob(base64);
+  } catch {
+    throw new AppError("Invalid base64 image data", 400);
+  }
+}
+
 export type UploadActivityIconResult = {
   iconUrl: string;
   iconThumbnailUrl: string;
@@ -60,7 +68,7 @@ export function uploadActivityIcon(
       throw new ResourceNotFoundError("activity not found");
     }
 
-    const binaryString = atob(base64);
+    const binaryString = decodeBase64OrThrow(base64);
     const bytes = new Uint8Array(binaryString.length);
     for (let index = 0; index < binaryString.length; index++) {
       bytes[index] = binaryString.charCodeAt(index);
