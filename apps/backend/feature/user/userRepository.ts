@@ -1,5 +1,6 @@
 import { ConflictError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
+import { isPostgresUniqueViolation } from "@backend/infra/rdb/postgresError";
 import { users } from "@infra/drizzle/schema";
 import type { TabPreference } from "@packages/domain/user/tabPreferenceSchema";
 import {
@@ -100,15 +101,8 @@ function createUser(db: QueryExecutor) {
 
       return persistedUser;
     } catch (error: unknown) {
-      // PostgreSQLの一意制約違反エラーをチェック
-      if (
-        error != null &&
-        typeof error === "object" &&
-        "code" in error &&
-        error.code === "23505" &&
-        "constraint" in error &&
-        error.constraint === "user_login_id_unique"
-      ) {
+      // PostgreSQLの一意制約違反エラーをチェック (DrizzleQueryError の cause も辿る)
+      if (isPostgresUniqueViolation(error, "user_login_id_unique")) {
         throw new ConflictError("このログインIDは既に使用されています");
       }
       throw error;

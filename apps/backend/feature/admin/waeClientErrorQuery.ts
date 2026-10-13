@@ -1,3 +1,4 @@
+import { AppError } from "@backend/error";
 import { type Logger, noopLogger } from "@backend/lib/logger";
 import type {
   ClientErrorDetail,
@@ -22,7 +23,7 @@ const ALLOWED_PLATFORMS = ["web", "ios", "android"] as const;
 
 function buildDetailQuery(platform: string): string {
   if (!(ALLOWED_PLATFORMS as readonly string[]).includes(platform)) {
-    throw new Error(`Invalid platform: ${platform}`);
+    throw new AppError("Invalid platform", 400);
   }
   return `
 SELECT

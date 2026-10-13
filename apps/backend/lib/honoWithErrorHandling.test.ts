@@ -19,6 +19,22 @@ describe("hono error response", () => {
     });
   });
 
+  it("maps a postgres unique violation wrapped by drizzle to 409", async () => {
+    const wrapped = new Error("Failed query", {
+      cause: Object.assign(new Error("duplicate key"), {
+        code: "23505",
+        constraint: "activity_log_pkey",
+      }),
+    });
+    const response = await newHonoWithErrorHandling()
+      .get("/dup", () => {
+        throw wrapped;
+      })
+      .request("/dup", {}, { NODE_ENV: "production" });
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ message: "conflict" });
+  });
+
   it("keeps stack traces available in local tests", async () => {
     const response = await app().request("/boom", {}, { NODE_ENV: "test" });
     expect(response.status).toBe(500);

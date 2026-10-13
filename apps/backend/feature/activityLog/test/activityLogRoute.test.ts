@@ -4,6 +4,7 @@ import { testClient } from "hono/testing";
 import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { testDB } from "@backend/test.setup";
+import { activities, users } from "@infra/drizzle/schema";
 import { expect, test } from "vitest";
 
 import { createActivityLogRoute } from "..";
@@ -85,6 +86,70 @@ test("POST activityLogs / success", async () => {
   });
 
   expect(res.status).toEqual(201);
+});
+
+test("POST activityLogs / 他人の activityId は 404", async () => {
+  const otherUserId = "00000000-0000-4000-8000-00000000ffff";
+  const otherActivityId = "00000000-0000-4000-8000-0000000ffff1";
+  await testDB
+    .insert(users)
+    .values({ id: otherUserId, loginId: "other-user", name: "other" });
+  await testDB.insert(activities).values({
+    id: otherActivityId,
+    userId: otherUserId,
+    name: "other activity",
+    label: "other",
+    emoji: "🧪",
+    orderIndex: "gaf",
+    quantityUnit: "回",
+    iconType: "emoji",
+  });
+
+  const route = createActivityLogRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+
+  const res = await app.request(
+    "/",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        activityId: otherActivityId,
+        quantity: 1,
+        date: "2021-01-01",
+      }),
+      headers: { "Content-Type": "application/json" },
+    },
+    { DB: testDB, NODE_ENV: "test" },
+  );
+
+  expect(res.status).toEqual(404);
+  expect((await res.json()).message).toEqual("activity not found");
+});
+
+test("POST activityLogs / クライアント指定 ID の重複は 409", async () => {
+  const route = createActivityLogRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+  const body = JSON.stringify({
+    id: "00000000-0000-4000-8000-00000000d0e1",
+    activityId: "00000000-0000-4000-8000-000000000001",
+    quantity: 1,
+    date: "2021-01-01",
+  });
+  const request = () =>
+    app.request(
+      "/",
+      { method: "POST", body, headers: { "Content-Type": "application/json" } },
+      { DB: testDB, NODE_ENV: "test" },
+    );
+
+  expect((await request()).status).toEqual(201);
+  const res = await request();
+  expect(res.status).toEqual(409);
+  expect(await res.json()).toEqual({ message: "conflict" });
 });
 
 test("PUT activityLogs/:id / success", async () => {

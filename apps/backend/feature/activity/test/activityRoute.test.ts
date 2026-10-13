@@ -200,6 +200,33 @@ test("POST activities/:id/icon / invalid file type", async () => {
   expect(res.status).toEqual(400);
 });
 
+test("POST activities/:id/icon / invalid base64 は 400", async () => {
+  const route = createActivityRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+
+  const res = await app.request(
+    "/00000000-0000-4000-8000-000000000001/icon",
+    {
+      method: "POST",
+      body: JSON.stringify({ base64: "@@@invalid@@@", mimeType: "image/png" }),
+      headers: {
+        "x-user-id": "00000000-0000-4000-8000-000000000001",
+        "Content-Type": "application/json",
+      },
+    },
+    {
+      DB: testDB,
+      STORAGE: "local",
+      APP_URL: "http://localhost:3000",
+    },
+  );
+
+  expect(res.status).toEqual(400);
+  expect((await res.json()).message).toEqual("Invalid base64 image data");
+});
+
 test("POST activities/:id/icon / activity not found", async () => {
   const route = createActivityRoute();
   const app = newHonoWithErrorHandling()
