@@ -219,3 +219,51 @@ test("GET activityLogs/stats / date 指定で 200", async () => {
 
   expect(res.status).toEqual(200);
 });
+
+test("POST activityLogs/batch / 同じ id の再送は duplicate、id なしの同一内容は全件作成する", async () => {
+  const route = createActivityLogRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+  const env = { DB: testDB, NODE_ENV: "test" };
+  const activityId = "00000000-0000-4000-8000-000000000001";
+  const id = "10000000-0000-4000-8000-00000000b001";
+  const log = { date: "2030-06-01", quantity: 1, memo: "", activityId };
+  const post = (activityLogs: unknown[]) =>
+    app.request(
+      "/batch",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activityLogs }),
+      },
+      env,
+    );
+
+  // 1 タップ = 1 件のバイナリ記録: 内容が同じでも全件作成される
+  const first = await post([log, log, { ...log, id }]);
+  expect(first.status).toEqual(200);
+  const firstJson = await first.json();
+  expect(firstJson.summary).toEqual({ total: 3, succeeded: 3, failed: 0 });
+
+  // 同じリクエストの再送: id 付きは duplicate (409 でバッチ全体が落ちない)、id なしは作成
+  const second = await post([
+    { ...log, id },
+    { ...log, id: id.toUpperCase() },
+    log,
+  ]);
+  expect(second.status).toEqual(200);
+  const secondJson = await second.json();
+  expect(secondJson.summary).toEqual({ total: 3, succeeded: 1, failed: 2 });
+  expect(secondJson.results[0]).toMatchObject({
+    index: 0,
+    success: false,
+    error: "Duplicate activity log",
+  });
+  expect(secondJson.results[1].success).toBe(false);
+  expect(secondJson.results[2].success).toBe(true);
+
+  const stored = await app.request("/?date=2030-06-01", { method: "GET" }, env);
+  const storedJson = await stored.json();
+  expect(storedJson).toHaveLength(4);
+});

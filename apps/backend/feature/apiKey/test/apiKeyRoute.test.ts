@@ -141,3 +141,18 @@ test("DELETE /api-keys/:id - should return 404 for non-existent API key", async 
 
   expect(res.status).toEqual(404); // ResourceNotFoundErrorは404を返す
 });
+
+test("DELETE /api-keys/:id - 非 UUID の id で 400", async () => {
+  const route = createApiKeyRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+
+  const res = await app.request(
+    "/not-a-uuid",
+    { method: "DELETE" },
+    { DB: testDB, NODE_ENV: "test" },
+  );
+
+  expect(res.status).toEqual(400);
+});

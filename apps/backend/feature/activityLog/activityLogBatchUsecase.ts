@@ -36,6 +36,10 @@ function toBatchErrorMessage(error: unknown): string {
   return "Failed to create activity logs";
 }
 
+const DUPLICATE_ERROR_MESSAGE = "Duplicate activity log";
+
+type BatchResult = CreateActivityLogBatchResponse["results"][number];
+
 export function createActivityLogBatch(
   repo: ActivityLogRepository,
   acRepo: ActivityRepository,
@@ -46,6 +50,11 @@ export function createActivityLogBatch(
     userId: UserId,
     activityLogs: CreateActivityLogParams[],
   ): Promise<CreateActivityLogBatchResponse> => {
+    // 同一内容のログは正当な記録 (1 タップ = 1 件のバイナリ記録など) なので内容では
+    // 重複判定しない。クライアント指定 id が既に存在する要素だけを duplicate として
+    // 扱い、同じリクエストの再送で二重計上しないようにする。
+    const duplicateIndexes = new Set<number>();
+
     try {
       const createdLogs = await db.transaction(async (tx) => {
         const txRepo = repo.withTx(tx);
@@ -60,9 +69,29 @@ export function createActivityLogBatch(
         );
         const activityMap = new Map(activities.map((a) => [a.id, a]));
 
+        const requestedIds = activityLogs
+          .map((p) => p.id?.toLowerCase())
+          .filter((id): id is string => id !== undefined);
+        const existingIds =
+          requestedIds.length === 0
+            ? new Set<string>()
+            : await tracer.span("db.getExistingActivityLogIds", () =>
+                txRepo.getExistingActivityLogIds(userId, requestedIds),
+              );
+        const seenIds = new Set([...existingIds].map((id) => id.toLowerCase()));
+
         const logsToCreate: ActivityLog[] = [];
 
-        for (const params of activityLogs) {
+        for (const [index, params] of activityLogs.entries()) {
+          const requestedId = params.id?.toLowerCase();
+          if (requestedId !== undefined) {
+            if (seenIds.has(requestedId)) {
+              duplicateIndexes.add(index);
+              continue;
+            }
+            seenIds.add(requestedId);
+          }
+
           const activityId = createActivityId(params.activityId);
           const activityKindId =
             params.activityKindId == null
@@ -105,23 +134,37 @@ export function createActivityLogBatch(
           logsToCreate.push(activityLog);
         }
 
+        if (logsToCreate.length === 0) return [];
         return tracer.span("db.createActivityLogBatch", () =>
           txRepo.createActivityLogBatch(logsToCreate),
         );
       });
 
-      const results = createdLogs.map((log, index) => ({
-        index,
-        success: true,
-        activityLogId: log.id,
-      }));
+      const results: BatchResult[] = [];
+      let createdIndex = 0;
+      for (let index = 0; index < activityLogs.length; index++) {
+        if (duplicateIndexes.has(index)) {
+          results.push({
+            index,
+            success: false,
+            error: DUPLICATE_ERROR_MESSAGE,
+          });
+          continue;
+        }
+        results.push({
+          index,
+          success: true,
+          activityLogId: createdLogs[createdIndex].id,
+        });
+        createdIndex++;
+      }
 
       return {
         results,
         summary: {
           total: activityLogs.length,
-          succeeded: activityLogs.length,
-          failed: 0,
+          succeeded: createdLogs.length,
+          failed: duplicateIndexes.size,
         },
       };
     } catch (error) {

@@ -274,3 +274,16 @@ describe("DELETE /admin/users/:id", () => {
     expect(res.status).toBe(403);
   });
 });
+
+describe("GET /admin/contacts/:id", () => {
+  it("非 UUID の id で 400", async () => {
+    const token = await signAdminToken();
+    const res = await createTestApp().request(
+      "/contacts/not-a-uuid",
+      { method: "GET", headers: { Authorization: `Bearer ${token}` } },
+      makeBindings(),
+    );
+
+    expect(res.status).toBe(400);
+  });
+});

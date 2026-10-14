@@ -11,7 +11,7 @@ import {
   createActivityLogEntity,
 } from "@packages/domain/activityLog/activityLogSchema";
 import type { UserId } from "@packages/domain/user/userSchema";
-import { and, between, eq, isNull } from "drizzle-orm";
+import { and, between, eq, inArray, isNull } from "drizzle-orm";
 
 import {
   createActivityLog,
@@ -43,6 +43,10 @@ export type ActivityLogRepository<T = QueryExecutor> = {
     activityLogId: ActivityLogId,
   ) => Promise<ActivityLog | undefined>;
   createActivityLog: (activityLog: ActivityLog) => Promise<ActivityLog>;
+  getExistingActivityLogIds: (
+    userId: UserId,
+    activityLogIds: string[],
+  ) => Promise<Set<string>>;
   createActivityLogBatch: (
     activityLogs: ActivityLog[],
   ) => Promise<ActivityLog[]>;
@@ -66,6 +70,7 @@ export function newActivityLogRepository(
       getActivityLogSummariesByUserIdAndDate(db),
     getActivityLogByIdAndUserId: getActivityLogByIdAndUserId(db),
     createActivityLog: createActivityLog(db),
+    getExistingActivityLogIds: getExistingActivityLogIds(db),
     createActivityLogBatch: createActivityLogBatch(db),
     updateActivityLog: updateActivityLog(db),
     deleteActivityLog: deleteActivityLog(db),
@@ -82,6 +87,26 @@ function hardDeleteActivityLogsByUserId(db: QueryExecutor) {
       .where(eq(activityLogs.userId, userId))
       .returning();
     return result.length;
+  };
+}
+
+// batch 作成の冪等化用。論理削除済みの行も PK としては存在するので deletedAt では絞らない
+function getExistingActivityLogIds(db: QueryExecutor) {
+  return async (
+    userId: UserId,
+    activityLogIds: string[],
+  ): Promise<Set<string>> => {
+    if (activityLogIds.length === 0) return new Set();
+    const rows = await db
+      .select({ id: activityLogs.id })
+      .from(activityLogs)
+      .where(
+        and(
+          eq(activityLogs.userId, userId),
+          inArray(activityLogs.id, activityLogIds),
+        ),
+      );
+    return new Set(rows.map((row) => row.id));
   };
 }
 

@@ -26,18 +26,25 @@ export type UploadActivityIconResult = {
   iconThumbnailUrl: string;
 };
 
-function extractStorageKey(url: string): string {
-  const match = url.match(/\/r2\/(.+)$/);
-  if (match) {
-    return match[1];
+// 削除対象は、この activity 用にサーバーが生成した key (generateIconKey の
+// `icons/<userId>/<activityId>_<timestamp>_<random>[_thumb].webp`) に限定する。
+// iconUrl は同期 API 経由でクライアントが書き換えられるため、他ユーザーの key や
+// 外部 URL・`..` を含む値を指していてもストレージには触れず、DB の参照だけを消す。
+export function resolveOwnedStorageKey(
+  url: string,
+  userId: UserId,
+  activityId: ActivityId,
+): string | null {
+  const key = url.match(/\/(?:r2|public\/uploads)\/(.+)$/)?.[1];
+  if (!key) return null;
+  const prefix = `icons/${userId}/${activityId}_`;
+  if (
+    !key.startsWith(prefix) ||
+    !/^[A-Za-z0-9_]+\.webp$/.test(key.slice(prefix.length))
+  ) {
+    return null;
   }
-
-  const localMatch = url.match(/\/public\/uploads\/(.+)$/);
-  if (localMatch) {
-    return localMatch[1];
-  }
-
-  return url.split("/").slice(-3).join("/");
+  return key;
 }
 
 export function uploadActivityIcon(
@@ -137,19 +144,23 @@ export function deleteActivityIcon(
       throw new ResourceNotFoundError("activity not found");
     }
 
-    const iconEntries = [
-      activity.iconUrl
-        ? { url: activity.iconUrl, key: extractStorageKey(activity.iconUrl) }
-        : null,
-      activity.iconThumbnailUrl
-        ? {
-            url: activity.iconThumbnailUrl,
-            key: extractStorageKey(activity.iconThumbnailUrl),
-          }
-        : null,
-    ].filter((entry): entry is { url: string; key: string } => Boolean(entry));
+    const iconUrls = [activity.iconUrl, activity.iconThumbnailUrl].filter(
+      (url): url is string => Boolean(url),
+    );
+    const iconKeys = iconUrls.map((url) =>
+      resolveOwnedStorageKey(url, userId, activityId),
+    );
+    const skippedCount = iconKeys.filter((key) => key === null).length;
+    if (skippedCount > 0) {
+      logger.warn("Skip storage delete for icon url outside owned key", {
+        activityId,
+        skippedCount,
+      });
+    }
 
-    const deleteKeys = [...new Set(iconEntries.map((entry) => entry.key))];
+    const deleteKeys = [
+      ...new Set(iconKeys.filter((key): key is string => key !== null)),
+    ];
     const deletedKeys: string[] = [];
 
     await tracer.span("db.updateActivityIcon", () =>

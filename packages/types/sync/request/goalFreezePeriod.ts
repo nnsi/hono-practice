@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { hasUniqueIds } from "./uniqueIds";
+
 import { addEndDateRangeIssue, dateStringSchema } from "../../dateSchemas";
 
 export const UpsertGoalFreezePeriodRequestSchema = z
@@ -17,7 +19,10 @@ export const UpsertGoalFreezePeriodRequestSchema = z
   });
 
 export const SyncGoalFreezePeriodsRequestSchema = z.object({
-  freezePeriods: z.array(UpsertGoalFreezePeriodRequestSchema).max(100),
+  freezePeriods: z
+    .array(UpsertGoalFreezePeriodRequestSchema)
+    .max(100)
+    .refine(hasUniqueIds, "duplicate goal freeze period ids"),
 });
 
 export type UpsertGoalFreezePeriodRequest = z.infer<

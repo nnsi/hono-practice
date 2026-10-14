@@ -1,13 +1,16 @@
 import { z } from "zod";
 
+import { iconUrlSchema } from "./iconUrl";
+import { hasUniqueIds } from "./uniqueIds";
+
 export const UpsertActivityRequestSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(200),
   label: z.string().max(200),
   emoji: z.string().max(50),
   iconType: z.enum(["emoji", "upload", "generate"]),
-  iconUrl: z.string().max(2000).nullable(),
-  iconThumbnailUrl: z.string().max(2000).nullable(),
+  iconUrl: iconUrlSchema,
+  iconThumbnailUrl: iconUrlSchema,
   description: z.string().max(1000),
   quantityUnit: z.string().max(50),
   orderIndex: z.string().max(200),
@@ -31,8 +34,14 @@ export const UpsertActivityKindRequestSchema = z.object({
 });
 
 export const SyncActivitiesRequestSchema = z.object({
-  activities: z.array(UpsertActivityRequestSchema).max(100),
-  activityKinds: z.array(UpsertActivityKindRequestSchema).max(500),
+  activities: z
+    .array(UpsertActivityRequestSchema)
+    .max(100)
+    .refine(hasUniqueIds, "duplicate activity ids"),
+  activityKinds: z
+    .array(UpsertActivityKindRequestSchema)
+    .max(500)
+    .refine(hasUniqueIds, "duplicate activity kind ids"),
 });
 
 /**
@@ -41,8 +50,14 @@ export const SyncActivitiesRequestSchema = z.object({
  * rejecting a whole chunk because one record is malformed.
  */
 export const SyncActivitiesEnvelopeSchema = z.object({
-  activities: z.array(z.unknown()).max(100),
-  activityKinds: z.array(z.unknown()).max(500),
+  activities: z
+    .array(z.unknown())
+    .max(100)
+    .refine(hasUniqueIds, "duplicate activity ids"),
+  activityKinds: z
+    .array(z.unknown())
+    .max(500)
+    .refine(hasUniqueIds, "duplicate activity kind ids"),
 });
 
 export type UpsertActivityRequest = z.infer<typeof UpsertActivityRequestSchema>;
