@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
-import { readFile, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -82,6 +82,33 @@ describe("localStorageService", () => {
     it("存在しないファイルを削除してもエラーにならない", async () => {
       await expect(storage.delete("non-existent.txt")).resolves.toBeUndefined();
     });
+
+    it("uploads 配下の symlink 経由でも外のファイルを削除しない", async () => {
+      const outside = join(testDir, "..", "test-uploads-symlink-target.txt");
+      await writeFile(outside, "marker");
+      await mkdir(testDir, { recursive: true });
+      await symlink(resolve(outside), join(testDir, "link.txt"));
+      try {
+        await storage.delete("link.txt");
+        expect(existsSync(outside)).toBe(true);
+        expect(await storage.exists("link.txt")).toBe(false);
+      } finally {
+        await rm(outside, { force: true });
+      }
+    });
+
+    it("`..` で uploads ディレクトリ外のファイルを削除しない", async () => {
+      const outside = join(testDir, "..", "test-uploads-outside.txt");
+      await writeFile(outside, "marker");
+      try {
+        await expect(
+          storage.delete("../test-uploads-outside.txt"),
+        ).rejects.toThrow("storage key escapes upload directory");
+        expect(existsSync(outside)).toBe(true);
+      } finally {
+        await rm(outside, { force: true });
+      }
+    });
   });
 
   describe("getUrl", () => {
@@ -108,6 +135,10 @@ describe("localStorageService", () => {
       const exists = await storage.exists("non-existent.txt");
 
       expect(exists).toBe(false);
+    });
+
+    it("`..` で uploads ディレクトリ外を問い合わせても false を返す", async () => {
+      expect(await storage.exists("../package.json")).toBe(false);
     });
   });
 });

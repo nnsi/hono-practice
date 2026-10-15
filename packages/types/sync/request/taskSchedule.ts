@@ -1,5 +1,8 @@
 import { taskScheduleDataSchema } from "@packages/domain/taskSchedule";
 import { z } from "zod";
+
+import { hasUniqueIds } from "./uniqueIds";
+
 export const UpsertTaskScheduleRequestSchema = taskScheduleDataSchema.and(
   z.object({
     id: z.string().uuid(),
@@ -12,10 +15,7 @@ export const SyncTaskSchedulesRequestSchema = z.object({
   taskSchedules: z
     .array(UpsertTaskScheduleRequestSchema)
     .max(100)
-    .refine(
-      (rows) => new Set(rows.map((row) => row.id)).size === rows.length,
-      "duplicate task schedule ids",
-    ),
+    .refine(hasUniqueIds, "duplicate task schedule ids"),
 });
 export type UpsertTaskScheduleRequest = z.infer<
   typeof UpsertTaskScheduleRequestSchema

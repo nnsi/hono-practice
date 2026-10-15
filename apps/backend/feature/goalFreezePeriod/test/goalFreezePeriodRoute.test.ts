@@ -83,3 +83,18 @@ test("DELETE freeze-periods/:id / not found", async () => {
 
   expect(res.status).toEqual(404);
 });
+
+test("GET freeze-periods / 非 UUID の goalId で 400", async () => {
+  const route = createGoalFreezePeriodRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+
+  const res = await app.request(
+    "/not-a-uuid/freeze-periods",
+    { method: "GET" },
+    { DB: testDB },
+  );
+
+  expect(res.status).toEqual(400);
+});

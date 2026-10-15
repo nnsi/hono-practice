@@ -92,14 +92,18 @@ function createAdminRoute() {
       const result = await c.var.adminHandler.listContacts(limit, offset);
       return c.json(result);
     })
-    .get("/contacts/:id", async (c) => {
-      const { id } = c.req.param();
-      const contact = await c.var.adminHandler.getContactById(id);
-      if (!contact) {
-        throw new AppError("Contact not found", 404);
-      }
-      return c.json(contact);
-    })
+    .get(
+      "/contacts/:id",
+      zValidator("param", z.object({ id: z.string().uuid() })),
+      async (c) => {
+        const { id } = c.req.valid("param");
+        const contact = await c.var.adminHandler.getContactById(id);
+        if (!contact) {
+          throw new AppError("Contact not found", 404);
+        }
+        return c.json(contact);
+      },
+    )
     .get("/client-errors/:platform", async (c) => {
       const { platform } = c.req.param();
       const details = await c.var.adminHandler.getClientErrorDetails(platform);

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { hasUniqueIds } from "./uniqueIds";
+
 import { addDateRangeIssue, dateStringSchema } from "../../dateSchemas";
 
 export const UpsertTaskRequestSchema = z
@@ -38,7 +40,10 @@ export const UpsertTaskRequestSchema = z
   });
 
 export const SyncTasksRequestSchema = z.object({
-  tasks: z.array(UpsertTaskRequestSchema).max(100),
+  tasks: z
+    .array(UpsertTaskRequestSchema)
+    .max(100)
+    .refine(hasUniqueIds, "duplicate task ids"),
 });
 
 export type UpsertTaskRequest = z.infer<typeof UpsertTaskRequestSchema>;

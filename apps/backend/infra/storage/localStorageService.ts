@@ -1,8 +1,9 @@
 import { existsSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, resolve } from "node:path";
 
 import type { StorageService } from ".";
+import { isPathInsideDir, isRealPathInsideDir } from "./localUploadDataUrl";
 
 export function newLocalStorageService(
   baseUrl: string,
@@ -14,12 +15,32 @@ export function newLocalStorageService(
     }
   };
 
+  // key は DB に保存された iconUrl から復元されるため、`..` で uploads
+  // ディレクトリ外のファイルを操作しないよう包含検査する。
+  const resolveInsideUploadDir = (key: string): string => {
+    const filePath = resolve(uploadDir, key);
+    // key が `.` や空のときは uploads ディレクトリ自体を指すので、ファイル操作には渡さない
+    if (
+      filePath === resolve(uploadDir) ||
+      !isPathInsideDir(uploadDir, filePath)
+    ) {
+      throw new Error("storage key escapes upload directory");
+    }
+    return filePath;
+  };
+
+  // 既存ファイルの操作では symlink の実体も uploads 配下か確認する
+  const existsInsideUploadDir = async (filePath: string): Promise<boolean> => {
+    if (!existsSync(filePath)) return false;
+    return isRealPathInsideDir(uploadDir, filePath);
+  };
+
   return {
     upload: async (file, key, options) => {
       await ensureUploadDir();
 
       const buffer = await file.arrayBuffer();
-      const filePath = join(uploadDir, key);
+      const filePath = resolveInsideUploadDir(key);
 
       // Ensure parent directory exists
       const parentDir = dirname(filePath);
@@ -42,8 +63,8 @@ export function newLocalStorageService(
     },
 
     delete: async (key) => {
-      const filePath = join(uploadDir, key);
-      if (existsSync(filePath)) {
+      const filePath = resolveInsideUploadDir(key);
+      if (await existsInsideUploadDir(filePath)) {
         await rm(filePath);
       }
     },
@@ -55,8 +76,11 @@ export function newLocalStorageService(
     },
 
     exists: async (key) => {
-      const filePath = join(uploadDir, key);
-      return existsSync(filePath);
+      const filePath = resolve(uploadDir, key);
+      if (!isPathInsideDir(uploadDir, filePath)) {
+        return false;
+      }
+      return existsInsideUploadDir(filePath);
     },
   };
 }

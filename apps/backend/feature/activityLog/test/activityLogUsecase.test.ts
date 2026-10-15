@@ -865,6 +865,9 @@ describe("ActivityLogUsecase", () => {
         it(`${name}`, async () => {
           // トランザクションのモック設定
           const txRepo = mock<ActivityLogRepository>();
+          when(
+            txRepo.getExistingActivityLogIds(anything(), anything()),
+          ).thenResolve(new Set());
           const txAcRepo = mock<ActivityRepository>();
 
           when(repo.withTx(anything())).thenReturn(instance(txRepo));
@@ -950,6 +953,9 @@ describe("ActivityLogUsecase", () => {
       };
 
       const txRepo = mock<ActivityLogRepository>();
+      when(
+        txRepo.getExistingActivityLogIds(anything(), anything()),
+      ).thenResolve(new Set());
       const txAcRepo = mock<ActivityRepository>();
 
       when(repo.withTx(anything())).thenReturn(instance(txRepo));
@@ -979,8 +985,64 @@ describe("ActivityLogUsecase", () => {
       expect(result.summary.failed).toBe(0);
     });
 
+    it("クライアント指定 id が既存・リクエスト内で重複する要素だけ duplicate とし、同一内容のログは作成する", async () => {
+      const txRepo = mock<ActivityLogRepository>();
+      const txAcRepo = mock<ActivityRepository>();
+
+      when(repo.withTx(anything())).thenReturn(instance(txRepo));
+      when(acRepo.withTx(anything())).thenReturn(instance(txAcRepo));
+      when(
+        txAcRepo.getActivitiesByIdsAndUserId(userId1, anything()),
+      ).thenResolve([mockActivity]);
+      // 大文字小文字の正規化を検証するため英字を含む id にする
+      const existingId = "1000000a-0000-4000-8000-00000000000a";
+      const newId = "1000000b-0000-4000-8000-00000000000b";
+      when(txRepo.getExistingActivityLogIds(userId1, anything())).thenResolve(
+        new Set([existingId]),
+      );
+      when(txRepo.createActivityLogBatch(anything())).thenCall(
+        async (logs: ActivityLog[]) => logs,
+      );
+      when(db.transaction(anything())).thenCall(async (callback) => {
+        return callback({ withTx: () => {} } as unknown as QueryExecutor);
+      });
+
+      const sameContent = {
+        date: "2025-01-01",
+        quantity: 1,
+        memo: "",
+        activityId: activityId1,
+      };
+      const result = await usecase.createActivityLogBatch(userId1, [
+        // 既に存在する id → duplicate
+        { ...sameContent, id: existingId },
+        // 新規 id → 作成
+        { ...sameContent, id: newId },
+        // 同一リクエスト内で id が重複 (大文字小文字違い) → duplicate
+        { ...sameContent, id: newId.toUpperCase() },
+        // id 未指定の同一内容 (バイナリ記録) は内容では重複扱いしない → 作成
+        sameContent,
+        sameContent,
+      ]);
+
+      expect(result.summary).toEqual({ total: 5, succeeded: 3, failed: 2 });
+      expect(result.results.map((r) => r.success)).toEqual([
+        false,
+        true,
+        false,
+        true,
+        true,
+      ]);
+      expect(result.results[0].error).toBe("Duplicate activity log");
+      expect(result.results[1].activityLogId).toBe(newId);
+      expect(result.results[2].error).toBe("Duplicate activity log");
+    });
+
     it("指定したactivityKindIdが存在しない場合はバッチ全体を失敗にする", async () => {
       const txRepo = mock<ActivityLogRepository>();
+      when(
+        txRepo.getExistingActivityLogIds(anything(), anything()),
+      ).thenResolve(new Set());
       const txAcRepo = mock<ActivityRepository>();
 
       when(repo.withTx(anything())).thenReturn(instance(txRepo));

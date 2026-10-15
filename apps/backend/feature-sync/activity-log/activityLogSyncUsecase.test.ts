@@ -1,5 +1,6 @@
 import { noopTracer } from "@backend/lib/tracer";
 import type { UserId } from "@packages/domain/user/userSchema";
+import dayjs from "dayjs";
 import { describe, expect, test, vi } from "vitest";
 
 import type { ActivityLogSyncRepository } from "./activityLogSyncRepository";
@@ -374,5 +375,47 @@ describe("activityLogSyncUsecase", () => {
 
       expect(result.syncedIds).toContain(req.id);
     });
+  });
+});
+
+// 10 年判定は現在時刻に依存するため、固定日付ではなく今日からの相対日付で作る。
+// (fake timers は updatedAt の「5 分以上未来は skip」判定と干渉するため使わない)
+function dateYearsAgo(years: number): string {
+  return dayjs().subtract(years, "year").format("YYYY-MM-DD");
+}
+
+describe("syncActivityLogs - date validation", () => {
+  test("deletedAt ありの tombstone は 10 年超過去でも skip しない", async () => {
+    const repo = createMockRepo();
+    const usecase = newActivityLogSyncUsecase(repo, noopTracer);
+    const tombstone = makeUpsertRequest({
+      id: "10000000-0000-4000-8000-000000000013",
+      date: dateYearsAgo(11),
+      deletedAt: new Date().toISOString(),
+    });
+
+    await usecase.syncActivityLogs(USER_ID, [tombstone]);
+
+    // 日付フィルタを通過して upsert に渡ることを確認する (mock の upsert は空を返すため
+    // skippedIds ではなく呼び出し引数で判定する)
+    expect(repo.upsertActivityLogs).toHaveBeenCalledWith(USER_ID, [tombstone]);
+  });
+
+  test("10 年超過去の date は skippedIds に入り upsert 対象から外れる", async () => {
+    const repo = createMockRepo();
+    const usecase = newActivityLogSyncUsecase(repo, noopTracer);
+    const tooOld = makeUpsertRequest({
+      id: "10000000-0000-4000-8000-000000000011",
+      date: dateYearsAgo(11),
+    });
+    const ok = makeUpsertRequest({
+      id: "10000000-0000-4000-8000-000000000012",
+      date: dateYearsAgo(1),
+    });
+
+    const result = await usecase.syncActivityLogs(USER_ID, [tooOld, ok]);
+
+    expect(result.skippedIds).toContain(tooOld.id);
+    expect(repo.upsertActivityLogs).toHaveBeenCalledWith(USER_ID, [ok]);
   });
 });

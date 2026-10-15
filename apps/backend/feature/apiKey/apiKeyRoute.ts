@@ -6,6 +6,7 @@ import { noopTracer } from "@backend/lib/tracer";
 import { premiumMiddleware } from "@backend/middleware/premiumMiddleware";
 import { zValidator } from "@hono/zod-validator";
 import { CreateApiKeyRequestSchema } from "@packages/types/request";
+import { z } from "zod";
 
 import { newApiKeyHandler } from "./apiKeyHandler";
 import { newApiKeyRepository } from "./apiKeyRepository";
@@ -54,14 +55,18 @@ export function createApiKeyRoute() {
 
       return c.json(res, 201);
     })
-    .delete("/:id", async (c) => {
-      const userId = c.get("userId");
-      const { id } = c.req.param();
+    .delete(
+      "/:id",
+      zValidator("param", z.object({ id: z.string().uuid() })),
+      async (c) => {
+        const userId = c.get("userId");
+        const { id } = c.req.valid("param");
 
-      await c.var.h.deleteApiKey(userId, id);
+        await c.var.h.deleteApiKey(userId, id);
 
-      return c.json({ success: true });
-    });
+        return c.json({ success: true });
+      },
+    );
 }
 
 export const apiKeyRoute = createApiKeyRoute();

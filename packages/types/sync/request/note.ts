@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { hasUniqueIds } from "./uniqueIds";
+
 export const UpsertNoteRequestSchema = z.object({
   id: z.string().uuid(),
   activityId: z.string().uuid().nullable(),
@@ -11,7 +13,10 @@ export const UpsertNoteRequestSchema = z.object({
 });
 
 export const SyncNotesRequestSchema = z.object({
-  notes: z.array(UpsertNoteRequestSchema).max(100),
+  notes: z
+    .array(UpsertNoteRequestSchema)
+    .max(100)
+    .refine(hasUniqueIds, "duplicate note ids"),
 });
 
 export type UpsertNoteRequest = z.infer<typeof UpsertNoteRequestSchema>;

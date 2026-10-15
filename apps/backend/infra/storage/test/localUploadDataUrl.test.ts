@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, rm, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { noopLogger } from "@backend/lib/logger";
@@ -75,6 +75,54 @@ describe("localUploadDataUrl", () => {
         },
       ),
     ).resolves.toBe("http://localhost:3456/public/other/icon");
+  });
+
+  it("does not read files outside the upload dir via `..` traversal", async () => {
+    const warn = vi.fn();
+    const secretPath = join(process.cwd(), "test-public", "secret.txt");
+    await writeFile(secretPath, "JWT_SECRET=leak");
+    try {
+      const url =
+        "http://localhost:3456/test-public/uploads/icons/../../secret.txt";
+      await expect(
+        convertLocalUploadUrlToDataUrl(url, {
+          isDevelopment: true,
+          uploadDir,
+          logger: { ...noopLogger, warn },
+          warnMessage: "warn",
+        }),
+      ).resolves.toBe(url);
+      expect(warn).toHaveBeenCalledWith(
+        "warn",
+        expect.objectContaining({ error: "path escapes upload directory" }),
+      );
+    } finally {
+      await rm(secretPath, { force: true });
+    }
+  });
+
+  it("does not read files outside the upload dir via a symlink inside it", async () => {
+    const warn = vi.fn();
+    const secretPath = join(process.cwd(), "test-public", "secret.txt");
+    await writeFile(secretPath, "JWT_SECRET=leak");
+    await symlink(secretPath, join(absoluteUploadDir, "icons", "link.png"));
+    try {
+      const url = "http://localhost:3456/test-public/uploads/icons/link.png";
+      await expect(
+        convertLocalUploadUrlToDataUrl(url, {
+          isDevelopment: true,
+          uploadDir,
+          logger: { ...noopLogger, warn },
+          warnMessage: "warn",
+        }),
+      ).resolves.toBe(url);
+      expect(warn).toHaveBeenCalledWith(
+        "warn",
+        expect.objectContaining({ error: "path escapes upload directory" }),
+      );
+    } finally {
+      await rm(secretPath, { force: true });
+    }
   });
 
   it("logs and falls back to the original url when the file does not exist", async () => {

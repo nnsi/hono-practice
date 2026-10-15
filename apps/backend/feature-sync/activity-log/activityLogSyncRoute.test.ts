@@ -2,6 +2,7 @@ import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { mockAuthMiddleware } from "@backend/middleware/mockAuthMiddleware";
 import { TEST_USER_ID, testDB } from "@backend/test.setup";
 import { activityLogs } from "@infra/drizzle/schema";
+import dayjs from "dayjs";
 import { describe, expect, test } from "vitest";
 
 import { activityLogSyncRoute } from "./activityLogSyncRoute";
@@ -430,5 +431,91 @@ describe("clock skew handling - 時計が早いケース", () => {
     const found = pullJson.logs.find((r: { id: string }) => r.id === logId);
     expect(found).toBeDefined();
     expect(found.quantity).toBe(42);
+  });
+});
+
+// 10 年判定は現在時刻に依存するため、固定日付ではなく今日からの相対日付で作る。
+// (fake timers は updatedAt の「5 分以上未来は skip」判定と干渉するため使わない)
+function dateYearsAgo(years: number): string {
+  return dayjs().subtract(years, "year").format("YYYY-MM-DD");
+}
+
+describe("POST /users/v2/activity-logs/sync - v1 と同等の入力検証", () => {
+  test("同一 id を 2 件含むリクエストは 500 ではなく 400", async () => {
+    const app = createApp();
+    const res = await postSync(app, {
+      logs: [makeLog({ quantity: 1 }), makeLog({ quantity: 2 })],
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test("大文字小文字違いの同一 id も 400 (Postgres uuid は区別しない)", async () => {
+    const app = createApp();
+    const id = "10000000-0000-4000-8000-0000000000ab";
+    const res = await postSync(app, {
+      logs: [makeLog({ id }), makeLog({ id: id.toUpperCase() })],
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test("10 年超過去でも deletedAt ありの tombstone は skip せず同期する", async () => {
+    const app = createApp();
+    const tombstone = makeLog({
+      id: "10000000-0000-4000-8000-000000000013",
+      date: dateYearsAgo(11),
+      deletedAt: new Date().toISOString(),
+    });
+
+    const res = await postSync(app, { logs: [tombstone] });
+    expect(res.status).toBe(200);
+
+    const json = await res.json();
+    expect(json.skippedIds).toEqual([]);
+    expect(json.syncedIds).toEqual([tombstone.id]);
+  });
+
+  test("quantity が QUANTITY_MAX(999999) を超えると 400", async () => {
+    const app = createApp();
+    const res = await postSync(app, {
+      logs: [makeLog({ quantity: 1_000_000 })],
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test("上限超の legacy quantity を持つ tombstone は chunk ごと 400 にせず同期する", async () => {
+    const app = createApp();
+    const legacyTombstone = makeLog({
+      id: "10000000-0000-4000-8000-000000000014",
+      quantity: 1_000_000,
+      deletedAt: new Date().toISOString(),
+    });
+    const ok = makeLog({ id: "10000000-0000-4000-8000-000000000015" });
+
+    const res = await postSync(app, { logs: [legacyTombstone, ok] });
+    expect(res.status).toBe(200);
+
+    const json = await res.json();
+    expect(json.syncedIds).toEqual(
+      expect.arrayContaining([legacyTombstone.id, ok.id]),
+    );
+  });
+
+  test("10 年超過去の date はバッチを失敗させず当該レコードだけ skip", async () => {
+    const app = createApp();
+    const tooOld = makeLog({
+      id: "10000000-0000-4000-8000-000000000011",
+      date: dateYearsAgo(11),
+    });
+    const ok = makeLog({
+      id: "10000000-0000-4000-8000-000000000012",
+      date: dateYearsAgo(1),
+    });
+
+    const res = await postSync(app, { logs: [tooOld, ok] });
+    expect(res.status).toBe(200);
+
+    const json = await res.json();
+    expect(json.skippedIds).toContain(tooOld.id);
+    expect(json.syncedIds).toEqual([ok.id]);
   });
 });
