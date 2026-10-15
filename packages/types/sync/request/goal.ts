@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { hasUniqueIds } from "./uniqueIds";
+
 import { addEndDateRangeIssue, dateStringSchema } from "../../dateSchemas";
 
 export const UpsertGoalRequestSchema = z
@@ -24,7 +26,10 @@ export const UpsertGoalRequestSchema = z
   });
 
 export const SyncGoalsRequestSchema = z.object({
-  goals: z.array(UpsertGoalRequestSchema).max(100),
+  goals: z
+    .array(UpsertGoalRequestSchema)
+    .max(100)
+    .refine(hasUniqueIds, "duplicate goal ids"),
 });
 
 export type UpsertGoalRequest = z.infer<typeof UpsertGoalRequestSchema>;

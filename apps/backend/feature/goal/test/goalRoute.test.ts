@@ -238,3 +238,71 @@ test("DELETE goals/:id / success", async () => {
   // Goal not found in test DB
   expect(res.status).toEqual(404);
 });
+
+test("GET goals/:id/stats / 複数日のログで average と max が数値として集計される", async () => {
+  const goalId = "00000000-0000-4000-8000-0000000000c1";
+  const activityId = "00000000-0000-4000-8000-000000000001";
+
+  await testDB.insert(schema.activityGoals).values({
+    id: goalId,
+    userId: TEST_USER_ID,
+    activityId,
+    dailyTargetQuantity: 5,
+    startDate: "2024-02-01",
+    endDate: "2024-02-02",
+  });
+  await testDB.insert(schema.activityLogs).values([
+    {
+      id: "00000000-0000-4000-8000-0000000000c2",
+      userId: TEST_USER_ID,
+      activityId,
+      activityKindId: "00000000-0000-4000-8000-000000000001",
+      date: "2024-02-01",
+      quantity: 6,
+    },
+    {
+      id: "00000000-0000-4000-8000-0000000000c3",
+      userId: TEST_USER_ID,
+      activityId,
+      activityKindId: "00000000-0000-4000-8000-000000000001",
+      date: "2024-02-02",
+      quantity: 6,
+    },
+  ]);
+
+  const route = createGoalRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+
+  const res = await app.request(
+    `/${goalId}/stats?clientDate=2024-02-02`,
+    { method: "GET" },
+    { DB: testDB },
+  );
+
+  expect(res.status).toEqual(200);
+  const body: {
+    dailyRecords: { date: string; quantity: number }[];
+    stats: { average: number; max: number };
+  } = await res.json();
+  // SUM が文字列のまま渡ると "06"+"06" の連結で average が 303 になる
+  expect(body.stats.average).toBe(6);
+  expect(body.stats.max).toBe(6);
+  expect(body.dailyRecords.map((r) => r.quantity)).toEqual([6, 6]);
+});
+
+test("GET goals/:id/stats / 非 UUID の id で 400", async () => {
+  const route = createGoalRoute();
+  const app = newHonoWithErrorHandling()
+    .use(mockAuthMiddleware)
+    .route("/", route);
+
+  const res = await app.request(
+    "/not-a-uuid/stats?clientDate=2024-02-02",
+    { method: "GET" },
+    { DB: testDB },
+  );
+
+  expect(res.status).toEqual(400);
+});

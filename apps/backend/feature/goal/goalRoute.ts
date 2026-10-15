@@ -8,6 +8,7 @@ import {
   CreateGoalRequestSchema,
   UpdateGoalRequestSchema,
 } from "@packages/types/request";
+import { z } from "zod";
 
 import type { AppContext } from "../../context";
 import { newActivityRepository } from "../activity/activityRepository";
@@ -100,21 +101,25 @@ export function createGoalRoute() {
         return c.json(res);
       })
       // 目標統計情報取得
-      .get("/:id/stats", async (c) => {
-        const userId = c.get("userId");
-        const { id } = c.req.param();
-        const clientDateResult = parseClientDate(c);
-        if (!clientDateResult.success) {
-          return clientDateResult.response;
-        }
+      .get(
+        "/:id/stats",
+        zValidator("param", z.object({ id: z.string().uuid() })),
+        async (c) => {
+          const userId = c.get("userId");
+          const { id } = c.req.valid("param");
+          const clientDateResult = parseClientDate(c);
+          if (!clientDateResult.success) {
+            return clientDateResult.response;
+          }
 
-        const res = await c.var.h.getGoalStats(
-          userId,
-          id,
-          clientDateResult.clientDate,
-        );
-        return c.json(res);
-      })
+          const res = await c.var.h.getGoalStats(
+            userId,
+            id,
+            clientDateResult.clientDate,
+          );
+          return c.json(res);
+        },
+      )
       // 目標作成
       .post("/", zValidator("json", CreateGoalRequestSchema), async (c) => {
         const userId = c.get("userId");

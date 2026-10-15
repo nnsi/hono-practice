@@ -236,6 +236,44 @@ describe("POST /users/v2/activities/sync", () => {
     expect(json.activityKinds.syncedIds).toContain(validKind.id);
   });
 
+  test("`..` や javascript: を含む iconUrl は VALIDATION_ERROR になる", async () => {
+    const app = createApp();
+    const traversal = makeActivity({
+      id: "10000000-0000-4000-8000-000000000301",
+      iconType: "upload",
+      iconUrl: "http://localhost:3456/public/uploads/icons/../../../.env",
+    });
+    const script = makeActivity({
+      id: "10000000-0000-4000-8000-000000000302",
+      iconType: "upload",
+      iconUrl: "javascript:alert(1)",
+    });
+    const thumbOnly = makeActivity({
+      id: "10000000-0000-4000-8000-000000000304",
+      iconType: "upload",
+      iconUrl: "http://localhost:3456/r2/icons/u/a.webp",
+      iconThumbnailUrl: "http://localhost:3456/r2/icons/%2e%2e/%2e%2e/x.webp",
+    });
+    const valid = makeActivity({
+      id: "10000000-0000-4000-8000-000000000303",
+      iconType: "upload",
+      iconUrl: "http://localhost:3456/r2/icons/u/a.webp",
+      iconThumbnailUrl: "data:image/webp;base64,AAAA",
+    });
+    const res = await postSync(app, {
+      activities: [traversal, script, thumbOnly, valid],
+      activityKinds: [],
+    });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.activities.failures.map((f: { id: string }) => f.id)).toEqual([
+      traversal.id,
+      script.id,
+      thumbOnly.id,
+    ]);
+    expect(json.activities.syncedIds).toContain(valid.id);
+  });
+
   test("バリデーションエラー - activityKindsキー欠損", async () => {
     const app = createApp();
     const res = await postSync(app, {
@@ -296,5 +334,25 @@ describe("GET /users/v2/activities", () => {
     const kindIds = json.activityKinds.map((k: { id: string }) => k.id);
     expect(kindIds).toContain(SEED_KIND_ID_1);
     expect(kindIds).toContain(SEED_KIND_ID_2);
+  });
+});
+
+describe("POST /users/v2/activities/sync - 重複 id", () => {
+  test("同一 activity id を 2 件含むと 500 ではなく 400", async () => {
+    const app = createApp();
+    const res = await postSync(app, {
+      activities: [makeActivity(), makeActivity({ name: "dup" })],
+      activityKinds: [],
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test("同一 activityKind id を 2 件含むと 500 ではなく 400", async () => {
+    const app = createApp();
+    const res = await postSync(app, {
+      activities: [],
+      activityKinds: [makeKind(), makeKind({ name: "dup" })],
+    });
+    expect(res.status).toBe(400);
   });
 });

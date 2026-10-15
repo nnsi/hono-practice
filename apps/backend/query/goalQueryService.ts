@@ -72,9 +72,11 @@ function getGoalStats(db: QueryExecutor) {
       .execute();
 
     // SQL集計結果を共有関数の入力形式に変換
+    // SUM(numeric) はドライバが文字列で返し customTypeNumeric の fromDriver も通らないため、
+    // ここで数値化しないとドメイン側の加算が文字列連結になる
     const logsForDomain = dailyLogs.map((l) => ({
       date: l.date,
-      quantity: l.totalQuantity,
+      quantity: Number(l.totalQuantity),
     }));
     const dailyTarget = Number(activityGoal.dailyTargetQuantity);
     const goalForDomain = {

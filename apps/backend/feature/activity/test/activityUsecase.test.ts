@@ -596,8 +596,10 @@ describe("ActivityUsecase", () => {
       when(repo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve({
         ...mockActivity,
         iconType: "upload",
-        iconUrl: "https://cdn.example.com/r2/icons/main.webp",
-        iconThumbnailUrl: "https://cdn.example.com/r2/icons/thumb.webp",
+        iconUrl:
+          "https://cdn.example.com/r2/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456.webp",
+        iconThumbnailUrl:
+          "https://cdn.example.com/r2/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456_thumb.webp",
       });
       when(
         repo.updateActivityIcon(activityId1, "emoji", null, null),
@@ -606,8 +608,8 @@ describe("ActivityUsecase", () => {
         repo.updateActivityIcon(
           activityId1,
           "upload",
-          "https://cdn.example.com/r2/icons/main.webp",
-          "https://cdn.example.com/r2/icons/thumb.webp",
+          "https://cdn.example.com/r2/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456.webp",
+          "https://cdn.example.com/r2/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456_thumb.webp",
         ),
       ).thenResolve();
       when(storage.delete(anything())).thenReject(new Error("r2 failed"));
@@ -622,8 +624,8 @@ describe("ActivityUsecase", () => {
         repo.updateActivityIcon(
           activityId1,
           "upload",
-          "https://cdn.example.com/r2/icons/main.webp",
-          "https://cdn.example.com/r2/icons/thumb.webp",
+          "https://cdn.example.com/r2/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456.webp",
+          "https://cdn.example.com/r2/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456_thumb.webp",
         ),
       ).once();
     });
@@ -631,8 +633,10 @@ describe("ActivityUsecase", () => {
       when(repo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve({
         ...mockActivity,
         iconType: "upload",
-        iconUrl: "https://cdn.example.com/r2/icons/main.webp",
-        iconThumbnailUrl: "https://cdn.example.com/r2/icons/thumb.webp",
+        iconUrl:
+          "https://cdn.example.com/r2/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456.webp",
+        iconThumbnailUrl:
+          "https://cdn.example.com/r2/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456_thumb.webp",
       });
       when(
         repo.updateActivityIcon(activityId1, "emoji", null, null),
@@ -649,46 +653,129 @@ describe("ActivityUsecase", () => {
         ...mockActivity,
         iconType: "upload",
         iconUrl:
-          "https://api.example.com/public/uploads/icons/user-1/icon.webp",
+          "https://api.example.com/public/uploads/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456.webp",
         iconThumbnailUrl:
-          "https://api.example.com/public/uploads/icons/user-1/icon.webp",
+          "https://api.example.com/public/uploads/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456.webp",
       });
       when(
         repo.updateActivityIcon(activityId1, "emoji", null, null),
       ).thenResolve();
-      when(storage.delete("icons/user-1/icon.webp")).thenResolve();
+      when(
+        storage.delete(
+          "icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456.webp",
+        ),
+      ).thenResolve();
 
       await usecase.deleteActivityIcon(userId1, activityId1);
 
-      verify(storage.delete("icons/user-1/icon.webp")).once();
+      verify(
+        storage.delete(
+          "icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456.webp",
+        ),
+      ).once();
     });
+    it("deleteActivityIcon: `..` を含む iconUrl はストレージに触れず DB の参照だけ消す", async () => {
+      when(repo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve({
+        ...mockActivity,
+        iconType: "upload",
+        iconUrl: "https://api.example.com/public/uploads/icons/../../../.env",
+        iconThumbnailUrl: null,
+      });
+      when(
+        repo.updateActivityIcon(activityId1, "emoji", null, null),
+      ).thenResolve();
+
+      await usecase.deleteActivityIcon(userId1, activityId1);
+
+      verify(storage.delete(anything())).never();
+      verify(repo.updateActivityIcon(activityId1, "emoji", null, null)).once();
+    });
+
+    it("deleteActivityIcon: 他ユーザー・他 activity の key を指す iconUrl は削除しない", async () => {
+      when(repo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve({
+        ...mockActivity,
+        iconType: "upload",
+        // 自分の activity の main は正当、thumbnail は他ユーザーの key
+        iconUrl:
+          "https://cdn.example.com/r2/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456.webp",
+        iconThumbnailUrl:
+          "https://cdn.example.com/r2/icons/99999999-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456_thumb.webp",
+      });
+      when(
+        repo.updateActivityIcon(activityId1, "emoji", null, null),
+      ).thenResolve();
+      when(storage.delete(anything())).thenResolve();
+
+      await usecase.deleteActivityIcon(userId1, activityId1);
+
+      verify(
+        storage.delete(
+          "icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456.webp",
+        ),
+      ).once();
+      verify(storage.delete(anything())).once();
+    });
+
+    it("deleteActivityIcon: 外部ホストの 1 階層 URL でも 400 にならず DB の参照を消す", async () => {
+      when(repo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve({
+        ...mockActivity,
+        iconType: "upload",
+        iconUrl: "https://cdn.example.com/a.png",
+        iconThumbnailUrl: null,
+      });
+      when(
+        repo.updateActivityIcon(activityId1, "emoji", null, null),
+      ).thenResolve();
+
+      await usecase.deleteActivityIcon(userId1, activityId1);
+
+      verify(storage.delete(anything())).never();
+      verify(repo.updateActivityIcon(activityId1, "emoji", null, null)).once();
+    });
+
     it("deleteActivityIcon: partial delete failureではDB rollbackしない", async () => {
       when(repo.getActivityByIdAndUserId(userId1, activityId1)).thenResolve({
         ...mockActivity,
         iconType: "upload",
-        iconUrl: "https://cdn.example.com/r2/icons/main.webp",
-        iconThumbnailUrl: "https://cdn.example.com/r2/icons/thumb.webp",
+        iconUrl:
+          "https://cdn.example.com/r2/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456.webp",
+        iconThumbnailUrl:
+          "https://cdn.example.com/r2/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456_thumb.webp",
       });
       when(
         repo.updateActivityIcon(activityId1, "emoji", null, null),
       ).thenResolve();
-      when(storage.delete("icons/main.webp")).thenResolve();
-      when(storage.delete("icons/thumb.webp")).thenReject(
-        new Error("r2 failed"),
-      );
+      when(
+        storage.delete(
+          "icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456.webp",
+        ),
+      ).thenResolve();
+      when(
+        storage.delete(
+          "icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456_thumb.webp",
+        ),
+      ).thenReject(new Error("r2 failed"));
 
       await expect(
         usecase.deleteActivityIcon(userId1, activityId1),
       ).rejects.toThrow("Failed to delete activity icon from storage");
 
-      verify(storage.delete("icons/main.webp")).once();
-      verify(storage.delete("icons/thumb.webp")).once();
+      verify(
+        storage.delete(
+          "icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456.webp",
+        ),
+      ).once();
+      verify(
+        storage.delete(
+          "icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456_thumb.webp",
+        ),
+      ).once();
       verify(
         repo.updateActivityIcon(
           activityId1,
           "upload",
-          "https://cdn.example.com/r2/icons/main.webp",
-          "https://cdn.example.com/r2/icons/thumb.webp",
+          "https://cdn.example.com/r2/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456.webp",
+          "https://cdn.example.com/r2/icons/00000000-0000-4000-8000-000000000000/00000000-0000-4000-8000-000000000001_1700000000000_abcdef123456_thumb.webp",
         ),
       ).never();
     });

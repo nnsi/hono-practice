@@ -6,6 +6,7 @@ import {
   CreateFreezePeriodRequestSchema,
   UpdateFreezePeriodRequestSchema,
 } from "@packages/types/request";
+import { z } from "zod";
 
 import type { AppContext } from "../../context";
 import { newGoalFreezePeriodHandler } from "./goalFreezePeriodHandler";
@@ -34,13 +35,17 @@ export function createGoalFreezePeriodRoute() {
   return (
     app
       // フリーズ期間一覧取得
-      .get("/:goalId/freeze-periods", async (c) => {
-        const userId = c.get("userId");
-        const { goalId } = c.req.param();
+      .get(
+        "/:goalId/freeze-periods",
+        zValidator("param", z.object({ goalId: z.string().uuid() })),
+        async (c) => {
+          const userId = c.get("userId");
+          const { goalId } = c.req.valid("param");
 
-        const res = await c.var.h.getFreezePeriods(userId, goalId);
-        return c.json(res);
-      })
+          const res = await c.var.h.getFreezePeriods(userId, goalId);
+          return c.json(res);
+        },
+      )
       // フリーズ期間作成
       .post(
         "/:goalId/freeze-periods",

@@ -1,4 +1,5 @@
 import type { activityLogs } from "@infra/drizzle/schema";
+import { validateActivityLogDate } from "@packages/domain/activityLog/activityLogValidation";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertActivityLogRequest } from "@packages/types";
 
@@ -46,6 +47,20 @@ function getActivityLogs(repo: ActivityLogSyncRepository, tracer: Tracer) {
   };
 }
 
+// v1 (`POST /users/activity-logs`) は domain factory 経由で 10 年超過去の日付を
+// 拒否するが、sync は repository へ直接 upsert するため同じ検証をここで行う。
+// 他の所有権 / FK チェックと同様に、バッチ全体ではなく当該レコードだけを skip する。
+// 削除 (deletedAt あり) は既存行の tombstone なので日付検証の対象外にする。
+// サーバー上で 10 年境界を越えたログの削除が届かなくなるのを避けるため。
+function isAcceptableLogDate(date: string): boolean {
+  try {
+    validateActivityLogDate(date);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function syncActivityLogs(repo: ActivityLogSyncRepository, tracer: Tracer) {
   return async (
     userId: UserId,
@@ -84,6 +99,7 @@ function syncActivityLogs(repo: ActivityLogSyncRepository, tracer: Tracer) {
 
     const validLogs = logs.filter((log) => {
       if (
+        (!log.deletedAt && !isAcceptableLogDate(log.date)) ||
         !ownedActivityIdSet.has(log.activityId) ||
         new Date(log.updatedAt) > maxAllowed ||
         (log.activityKindId &&
