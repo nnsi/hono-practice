@@ -84,10 +84,7 @@ export const createPrivacyPolicySectionsEn = (
   {
     title: "8. Data Retention and Deletion",
     content:
-      "Deleting your account in settings deactivates it and prevents login and access to associated data.\n\n" +
-      "Retention of account and activity data, access logs, error and authentication diagnostics, and support requests is limited to what is necessary for their purposes, support, fraud prevention, disputes, and legal obligations. Data that is no longer needed is deleted or made non-identifying. Records subject to a legal retention obligation are kept for the applicable statutory period.\n\n" +
-      `To request permanent deletion or ask about its status or completion time, contact ${config.contactUrl} or ${config.contactEmail}. After identity verification, we will explain the scope, expected handling, and outcome. This does not limit any statutory right to erasure or other data rights. This revision does not extend any deadline under the prior policy for a deletion request received before the revision applies.\n\n` +
-      "Local data can be removed through settings, by clearing browser site data, or by uninstalling the app, as applicable. Deleting your account or uninstalling the app does not automatically cancel an App Store or Google Play subscription. Cancel through the relevant store to stop recurring charges.",
+      "Deleting your account prevents login and access to associated data.",
   },
   {
     title: "9. Your Rights",
