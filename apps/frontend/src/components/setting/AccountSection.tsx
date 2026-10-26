@@ -38,6 +38,7 @@ export function AccountSection() {
     await authController.forceLogout("account_deleted");
     await db.delete();
     clearAppSettings();
+    window.alert(t("deleteAccountComplete"));
     window.location.href = "/";
   };
 

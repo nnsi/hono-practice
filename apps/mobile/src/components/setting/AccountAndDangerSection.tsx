@@ -4,7 +4,7 @@ import { useLogoutAction } from "@packages/auth-client";
 import { useTranslation } from "@packages/i18n";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AlertTriangle, LogOut, User } from "lucide-react-native";
-import { Text, TouchableOpacity } from "react-native";
+import { Alert, Text, TouchableOpacity } from "react-native";
 
 import { apiClient } from "../../api/apiClient";
 import { authController } from "../../auth/authController";
@@ -44,6 +44,7 @@ export function AccountAndDangerSection({
       // backend で user 削除済みのため通常 logout は server 401 で失敗するのが
       // 想定。forceLogout で local state を強制リセットしてログイン画面に戻す
       await authController.forceLogout("account_deleted");
+      Alert.alert(t("deleteAccount"), t("deleteAccountComplete"));
     } catch {
       setDeleteError(t("deleteAccountError"));
       setIsDeleting(false);
@@ -94,6 +95,7 @@ export function AccountAndDangerSection({
             onPress={() => setShowDeleteConfirm(true)}
             accessibilityRole="button"
             accessibilityLabel={t("deleteAccount")}
+            testID={mobileTestIds.settings.deleteAccountButton}
           >
             <AlertTriangle size={18} color="#ef4444" />
             <Text className="ml-3 text-base text-red-500 dark:text-red-400">
@@ -104,6 +106,7 @@ export function AccountAndDangerSection({
           <InlineConfirm
             message={t("deleteAccountConfirm")}
             confirmLabel={t("deleteAccountButton")}
+            confirmTestID={mobileTestIds.settings.deleteAccountConfirmButton}
             onConfirm={handleDeleteAccount}
             onCancel={() => {
               setShowDeleteConfirm(false);

@@ -67,7 +67,7 @@ export function newUserUsecase(
   txRunner: TransactionRunner,
   subscriptionUc: SubscriptionQueryUsecase,
   tracer: Tracer,
-  // deleteUser のみ refreshTokenRepo / apiKeyRepo を要求する。authRoute や admin
+  // deleteUser のみ削除用依存を要求する。authRoute や admin
   // 経路は deleteUser を呼ばないので undefined で OK (未設定で deleteUser を呼ぶと throw)
   deps?: UserDeleteUsecaseDeps,
   passwordVerifier = new MultiHashPasswordVerifier(),
@@ -85,11 +85,9 @@ export function newUserUsecase(
     getTabPreference: getTabPreference(repo, tracer),
     updateTabPreference: updateTabPreference(repo, tracer),
     deleteUser: deps
-      ? newDeleteUserUsecase(repo, deps, tracer)
+      ? newDeleteUserUsecase(deps, tracer)
       : async () => {
-          throw new Error(
-            "deleteUser requires deps (refreshTokenRepo, apiKeyRepo)",
-          );
+          throw new Error("deleteUser requires deletion dependencies");
         },
     listUsers: newListUsersUsecase(repo, tracer),
   };

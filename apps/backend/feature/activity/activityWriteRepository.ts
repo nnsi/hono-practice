@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@backend/error";
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
 import { activities, activityKinds } from "@infra/drizzle/schema";
 import {
@@ -120,7 +121,7 @@ export function updateActivityIcon(db: QueryExecutor) {
     iconUrl?: string | null,
     iconThumbnailUrl?: string | null,
   ): Promise<void> => {
-    await db
+    const updated = await db
       .update(activities)
       .set({
         iconType,
@@ -128,6 +129,9 @@ export function updateActivityIcon(db: QueryExecutor) {
         iconThumbnailUrl: iconThumbnailUrl || null,
         updatedAt: new Date(),
       })
-      .where(eq(activities.id, activityId));
+      .where(eq(activities.id, activityId))
+      .returning();
+    if (updated.length === 0)
+      throw new ResourceNotFoundError("activity not found");
   };
 }
