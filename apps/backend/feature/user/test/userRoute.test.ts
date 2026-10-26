@@ -1,6 +1,7 @@
 import { sign } from "hono/jwt";
 import { testClient } from "hono/testing";
 
+import { newHonoWithErrorHandling } from "@backend/lib/honoWithErrorHandling";
 import { TEST_USER_ID, testDB } from "@backend/test.setup";
 import {
   apiKeys,
@@ -363,7 +364,49 @@ describe("userRoute", () => {
   });
 
   describe("DELETE /me", () => {
-    it("正常系：アカウント削除時にユーザー・refresh token・API keyを失効する", async () => {
+    it("認証なしでは削除できない", async () => {
+      const response = await newHonoWithErrorHandling()
+        .route("/", createUserRoute())
+        .request(
+          "/me",
+          { method: "DELETE" },
+          {
+            DB: testDB,
+            JWT_SECRET: "test",
+            JWT_AUDIENCE: "test-audience",
+            NODE_ENV: "test",
+          },
+        );
+      expect(response.status).toBe(401);
+      expect(
+        await testDB.select().from(users).where(eq(users.id, TEST_USER_ID)),
+      ).toHaveLength(1);
+    });
+
+    it("削除後は発行済みのJWTも使用できない", async () => {
+      const jwt = await sign(
+        {
+          userId: TEST_USER_ID,
+          aud: "test-audience",
+          exp: Math.floor(Date.now() / 1000) + 3600,
+        },
+        "test",
+      );
+      const route = newHonoWithErrorHandling().route("/", createUserRoute());
+      const env = {
+        DB: testDB,
+        JWT_SECRET: "test",
+        JWT_AUDIENCE: "test-audience",
+      };
+      const headers = { Authorization: `Bearer ${jwt}` };
+      expect((await route.request("/me", { headers }, env)).status).toBe(200);
+      expect(
+        (await route.request("/me", { method: "DELETE", headers }, env)).status,
+      ).toBe(200);
+      expect((await route.request("/me", { headers }, env)).status).toBe(401);
+    });
+
+    it("正常系：アカウント削除時にユーザー・refresh token・API keyを物理削除する", async () => {
       const client = createAuthClient();
       await testDB.insert(apiKeys).values({
         id: "00000000-0000-4000-8000-000000000011",
@@ -381,21 +424,19 @@ describe("userRoute", () => {
         .select()
         .from(users)
         .where(eq(users.loginId, "test-user"));
-      expect(user.deletedAt).not.toBeNull();
+      expect(user).toBeUndefined();
 
       const tokens = await testDB
         .select()
         .from(refreshTokens)
         .where(eq(refreshTokens.userId, TEST_USER_ID));
-      expect(tokens.length).toBeGreaterThan(0);
-      expect(tokens.every((token) => token.revokedAt !== null)).toBe(true);
+      expect(tokens).toHaveLength(0);
 
       const [apiKey] = await testDB
         .select()
         .from(apiKeys)
         .where(eq(apiKeys.userId, TEST_USER_ID));
-      expect(apiKey.deletedAt).not.toBeNull();
-      expect(apiKey.isActive).toBe(false);
+      expect(apiKey).toBeUndefined();
     });
 
     it("正常系：アカウント削除時に refresh_token cookie を expire させる Set-Cookie を返す", async () => {

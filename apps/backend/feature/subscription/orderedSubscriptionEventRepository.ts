@@ -1,5 +1,5 @@
 import type { QueryExecutor } from "@backend/infra/rdb/drizzle";
-import { userSubscriptions } from "@infra/drizzle/schema";
+import { userSubscriptions, users } from "@infra/drizzle/schema";
 import {
   SUBSCRIPTION_STATUSES,
   type Subscription,
@@ -40,6 +40,15 @@ export function applyOrderedSubscriptionEvent(db: QueryExecutor) {
         "Ordered subscription events require provider identity and ordering metadata",
       );
     }
+
+    // The usecase calls this inside its transaction. Serialize with account
+    // deletion so late renewals neither recreate data nor fail their FK forever.
+    const [owner] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.id, subscription.userId), isNull(users.deletedAt)))
+      .for("key share");
+    if (!owner) return undefined;
 
     const values = subscriptionToPersistenceValues(subscription);
     const { id: _id, userId: _userId, ...mutableValues } = values;
