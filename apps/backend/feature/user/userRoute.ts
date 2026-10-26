@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { AppError } from "@backend/error";
 import { newRevenueCatSubscriptionQueryService } from "@backend/feature/subscription/revenueCatSubscriptionQueryService";
 import { newDrizzleTransactionRunner } from "@backend/infra/rdb/drizzle/drizzleTransaction";
+import { newUserFileDeletion } from "@backend/infra/storage/userFileDeletion";
 import { noopLogger } from "@backend/lib/logger";
 import { noopTracer } from "@backend/lib/tracer";
 import { authMiddleware } from "@backend/middleware/authMiddleware";
@@ -18,7 +19,6 @@ import {
 } from "@packages/types/request";
 
 import type { AppContext } from "../../context";
-import { newApiKeyRepository } from "../apiKey/apiKeyRepository";
 import { appleVerify } from "../auth/appleVerify";
 import { newAuthHandler } from "../auth/authHandler";
 import { clearRefreshCookie, setRefreshCookie } from "../auth/authRouteContext";
@@ -29,6 +29,7 @@ import { newUserProviderRepository } from "../auth/userProviderRepository";
 import { newSubscriptionRepository } from "../subscription/subscriptionRepository";
 import { newSubscriptionQueryUsecase } from "../subscription/subscriptionUsecase";
 import { newUserConsentRepository } from "./userConsentRepository";
+import { newUserDeletionRepository } from "./userDeletionRepository";
 import { newUserHandler } from "./userHandler";
 import { newUserRepository } from "./userRepository";
 import { newUserUsecase } from "./userUsecase";
@@ -55,7 +56,6 @@ export function createUserRoute() {
       db,
       logger.child({ repository: "refresh-token" }),
     );
-    const apiKeyRepo = newApiKeyRepository(db);
     const txRunner = newDrizzleTransactionRunner(db);
     const passwordVerifier = new (
       await import("../auth/passwordVerifier")
@@ -86,7 +86,11 @@ export function createUserRoute() {
       txRunner,
       subscriptionUc,
       tracer,
-      { refreshTokenRepo, apiKeyRepo },
+      {
+        deletionRepo: newUserDeletionRepository(db),
+        txRunner,
+        deleteUserFiles: newUserFileDeletion(c.env),
+      },
       passwordVerifier,
     );
     const authH = newAuthHandler(authUc, uc.getUserById, uc.enrichUser);
@@ -152,8 +156,7 @@ export function createUserRoute() {
     )
     .delete("/me", authMiddleware, async (c) => {
       const userId = c.get("userId");
-      // usecase に refresh token revoke + API key soft delete を集約。route 層は
-      // HTTP concern (cookie clear / status) のみ担当する
+      // 完全削除が成功した後だけ cookie と成功レスポンスを返す
       await c.var.h.deleteMe(userId);
       clearRefreshCookie(c);
       return c.json({ success: true });

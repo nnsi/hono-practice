@@ -93,6 +93,8 @@ export const mobileTestIds = {
     createButton: "goals.create",
   },
   settings: {
+    deleteAccountButton: "settings-delete-account",
+    deleteAccountConfirmButton: "settings-delete-account-confirm",
     screen: "settings.screen",
     logoutButton: "settings.logout",
     logoutConfirmButton: "settings.logoutConfirm",
