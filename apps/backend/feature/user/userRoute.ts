@@ -156,7 +156,7 @@ export function createUserRoute() {
     )
     .delete("/me", authMiddleware, async (c) => {
       const userId = c.get("userId");
-      // 完全削除が成功した後だけ cookie と成功レスポンスを返す
+      // 退会処理が成功した後だけ cookie と成功レスポンスを返す
       await c.var.h.deleteMe(userId);
       clearRefreshCookie(c);
       return c.json({ success: true });
