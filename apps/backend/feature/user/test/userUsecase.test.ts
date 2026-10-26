@@ -229,11 +229,11 @@ describe("UserUsecase", () => {
   });
 
   describe("deleteUser", () => {
-    it("完全削除を実行する", async () => {
+    it("退会時は無効化のみ実行する", async () => {
       when(deletionRepo.lockUserForDeletion(userId)).thenResolve(true);
-      when(deletionRepo.permanentlyDeleteUserData(userId)).thenResolve();
+      when(deletionRepo.deactivateUser(userId)).thenResolve();
       await usecase.deleteUser(userId);
-      verify(deletionRepo.permanentlyDeleteUserData(userId)).once();
+      verify(deletionRepo.deactivateUser(userId)).once();
     });
 
     it("失敗を成功扱いしない", async () => {

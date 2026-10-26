@@ -406,7 +406,7 @@ describe("userRoute", () => {
       expect((await route.request("/me", { headers }, env)).status).toBe(401);
     });
 
-    it("正常系：アカウント削除時にユーザー・refresh token・API keyを物理削除する", async () => {
+    it("正常系：アカウント削除時にユーザーを無効化しrefresh token・API keyを削除する", async () => {
       const client = createAuthClient();
       await testDB.insert(apiKeys).values({
         id: "00000000-0000-4000-8000-000000000011",
@@ -424,7 +424,7 @@ describe("userRoute", () => {
         .select()
         .from(users)
         .where(eq(users.loginId, "test-user"));
-      expect(user).toBeUndefined();
+      expect(user.deletedAt).toBeInstanceOf(Date);
 
       const tokens = await testDB
         .select()

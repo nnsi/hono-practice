@@ -42,3 +42,10 @@ dataset = "actiko_api_logs"
 [[env.production.analytics_engine_datasets]]
 binding = "WAE_CLIENT_ERRORS"
 dataset = "actiko_client_errors"
+
+# Daily cleanup after six calendar months of withdrawal (UTC).
+[env.stg.triggers]
+crons = ["0 18 * * *"]
+
+[env.production.triggers]
+crons = ["0 18 * * *"]
