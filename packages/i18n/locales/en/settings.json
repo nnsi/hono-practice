@@ -56,7 +56,7 @@
   "appleLinked": "Apple Linked",
   "appleLinkDescription": "Link your Apple account to sign in with Apple ID.",
   "deleteAccount": "Delete Account",
-  "deleteAccountConfirm": "Confirming deletion permanently removes your account, activity records, notes, tasks, uploaded images and related data from the server, and local data on this device. This cannot be undone. App Store / Google Play subscriptions are not automatically canceled and billing continues. Cancel in the store before deleting your account. Purchases cannot be transferred to another Actiko account. See the Privacy Policy for logs and backups.",
+  "deleteAccountConfirm": "Confirming deletion deactivates your account and deletes local data on this device. This cannot be undone. App Store / Google Play subscriptions are not automatically cancelled and billing continues. Cancel them in the store before deleting your account. Purchases cannot be transferred to another Actiko account. See the Privacy Policy for records that must be retained.",
   "deleteAccountButton": "Delete",
   "deleteAccountError": "Failed to delete account. Please check your network connection.",
   "apiKeyManagement": "Manage API keys for external application access",
@@ -95,5 +95,5 @@
   "logoutFailedRetry": "Logout failed. Please check your network and try again.",
   "dangerousOperations": "Dangerous Operations",
   "contact": "Contact Us",
-  "deleteAccountComplete": "Your account and related server data have been deleted. Store subscriptions are not automatically canceled."
+  "deleteAccountComplete": "Your account has been deactivated. Store subscriptions are not automatically cancelled."
 }

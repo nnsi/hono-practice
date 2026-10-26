@@ -84,10 +84,7 @@ export const createPrivacyPolicySectionsEn = (
   {
     title: "8. Data Retention and Deletion",
     content:
-      "Confirming account deletion in settings automatically deletes the server account, credentials, activity records, goals, notes, tasks, uploaded images, account-linked support requests and subscription data. A completion message appears after success. If processing fails, an error is shown; please retry. Some images may already have been removed. This action cannot be undone.\n\n" +
-      "Separately stored backups, access logs, error and authentication diagnostics, support requests not linked to an account, and records held by external services are not erased by this immediate operation. Their retention is limited to what is necessary for their purposes, support, fraud prevention, disputes, and legal obligations. Data that is no longer needed is deleted or made non-identifying. Records subject to a legal retention obligation are kept for the applicable statutory period.\n\n" +
-      `For accounts deactivated before this revision, deletion of records held by external services, or questions about status and completion time, contact ${config.contactUrl} or ${config.contactEmail}. After identity verification, we will explain the scope, expected handling, and outcome. This does not limit any statutory right to erasure or other data rights. This revision does not extend any deadline under the prior policy for a deletion request received before the revision applies.\n\n` +
-      "Local data can be removed through settings, by clearing browser site data, or by uninstalling the app, as applicable. Deleting your account or uninstalling the app does not automatically cancel an App Store or Google Play subscription. Cancel through the relevant store to stop recurring charges.",
+      "Deleting your account prevents login and access to associated data.",
   },
   {
     title: "9. Your Rights",

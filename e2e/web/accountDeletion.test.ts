@@ -47,7 +47,7 @@ describe("account deletion", () => {
       .getByRole("button", { name: "削除する", exact: true })
       .press("Enter");
     const dialog = await dialogPromise;
-    expect(dialog.message()).toContain("削除しました");
+    expect(dialog.message()).toContain("退会処理が完了しました");
     expect((await responsePromise).status()).toBe(200);
     await dialog.accept();
     await page.locator("#loginId").waitFor({ state: "visible" });

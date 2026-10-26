@@ -10,6 +10,7 @@ import { newSubscriptionCommandUsecase } from "../../subscription/subscriptionCo
 import { newSubscriptionHistoryRepository } from "../../subscription/subscriptionHistoryRepository";
 import { newSubscriptionRepository } from "../../subscription/subscriptionRepository";
 import { newDeleteUserUsecase } from "../userDeleteUsecase";
+import { cleanupExpiredUsers } from "../userDeletionCleanup";
 import { newUserDeletionRepository } from "../userDeletionRepository";
 
 const userId = createUserId(TEST_USER_ID);
@@ -18,7 +19,22 @@ function setup(deleteUserFiles = vi.fn(async () => {})) {
   const repo = newUserDeletionRepository(testDB);
   return {
     deleteUserFiles,
-    remove: newDeleteUserUsecase(
+    remove: async (_id: typeof userId) => {
+      await testDB
+        .update(schema.users)
+        .set({ deletedAt: new Date("2025-01-01T00:00:00Z") })
+        .where(eq(schema.users.id, userId));
+      const result = await cleanupExpiredUsers(
+        {
+          deletionRepo: repo,
+          txRunner: newDrizzleTransactionRunner(testDB),
+          deleteUserFiles,
+        },
+        new Date("2026-01-01T00:00:00Z"),
+      );
+      if (result.failed) throw new Error("storage unavailable or DB failure");
+    },
+    withdraw: newDeleteUserUsecase(
       {
         deletionRepo: repo,
         txRunner: newDrizzleTransactionRunner(testDB),
@@ -100,6 +116,66 @@ async function seedRelations() {
 }
 
 describe("permanent account deletion", () => {
+  it("withdrawal retains content and images, revokes credentials, and preserves the original withdrawal date", async () => {
+    await seedRelations();
+    const f = setup();
+    await f.withdraw(userId);
+    const [first] = await testDB.select().from(schema.users);
+    expect(first.deletedAt).toBeInstanceOf(Date);
+    expect(await testDB.select().from(schema.notes)).toHaveLength(1);
+    expect(await testDB.select().from(schema.userSubscriptions)).toHaveLength(
+      1,
+    );
+    expect(await testDB.select().from(schema.refreshTokens)).toHaveLength(0);
+    expect(await testDB.select().from(schema.apiKeys)).toHaveLength(0);
+    expect(f.deleteUserFiles).not.toHaveBeenCalled();
+    await f.withdraw(userId);
+    const [second] = await testDB.select().from(schema.users);
+    expect(second.deletedAt).toEqual(first.deletedAt);
+  });
+
+  it("uses six calendar months including month-end and excludes active accounts", async () => {
+    const repo = newUserDeletionRepository(testDB);
+    expect(await repo.listExpiredUsers(new Date("2030-01-01Z"))).toEqual([]);
+    await testDB
+      .update(schema.users)
+      .set({ deletedAt: new Date("2025-08-31T12:00:00Z") });
+    expect(
+      await repo.listExpiredUsers(new Date("2026-02-28T11:59:59Z")),
+    ).toEqual([]);
+    expect(
+      await repo.listExpiredUsers(new Date("2026-02-28T12:00:00Z")),
+    ).toEqual([userId]);
+    expect(
+      await repo.isUserDeletionDue(userId, new Date("2026-02-28T11:59:59Z")),
+    ).toBe(false);
+  });
+
+  it("scheduled cleanup keeps data before the deadline and deletes it at the deadline", async () => {
+    const files = vi.fn(async () => {});
+    const deps = {
+      deletionRepo: newUserDeletionRepository(testDB),
+      txRunner: newDrizzleTransactionRunner(testDB),
+      deleteUserFiles: files,
+    };
+    await testDB
+      .update(schema.users)
+      .set({ deletedAt: new Date("2026-01-31T10:00:00Z") });
+    expect(
+      await cleanupExpiredUsers(deps, new Date("2026-07-31T09:59:59Z")),
+    ).toEqual({ candidates: 0, deleted: 0, failed: 0 });
+    expect(files).not.toHaveBeenCalled();
+    expect(await testDB.select().from(schema.activityLogs)).toHaveLength(1);
+    expect(
+      await cleanupExpiredUsers(deps, new Date("2026-07-31T10:00:00Z")),
+    ).toEqual({ candidates: 1, deleted: 1, failed: 0 });
+    expect(await testDB.select().from(schema.users)).toHaveLength(0);
+    expect(
+      await cleanupExpiredUsers(deps, new Date("2026-08-01T10:00:00Z")),
+    ).toEqual({ candidates: 0, deleted: 0, failed: 0 });
+    expect(files).toHaveBeenCalledTimes(1);
+  });
+
   it("removes all related data including soft-deleted records, preserves another account, and is idempotent", async () => {
     await seedRelations();
     const otherId = createUserId();
@@ -109,6 +185,9 @@ describe("permanent account deletion", () => {
       .values({ userId: otherId, title: "keep" });
     const f = setup();
     await f.remove(userId);
+    expect(
+      await testDB.select().from(schema.subscriptionHistoryArchives),
+    ).toMatchObject([{ deletedUserId: userId, eventType: "created" }]);
     for (const table of [
       schema.activities,
       schema.activityLogs,
