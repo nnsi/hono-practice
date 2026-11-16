@@ -1,8 +1,13 @@
 appId: ${MAESTRO_APP_ID}
 ---
-# Daily ログ編集: seedの "E2Eランニング 5km" ログをタップ→数量変更→保存
+# 「この日の記録」のログ編集: seedの "E2Eランニング 5km" ログをタップ→数量変更→保存
+# グリッドのカード（"E2Eランニング"）と区別するため、記録行の accessibilityLabel（"名前, 数量"）で指定する
+- scrollUntilVisible:
+    element:
+      text: "E2Eランニング, .*"
+    direction: DOWN
 - tapOn:
-    text: "E2Eランニング.*"
+    text: "E2Eランニング, .*"
 - assertVisible:
     id: daily.editLog.dialog
 - tapOn:

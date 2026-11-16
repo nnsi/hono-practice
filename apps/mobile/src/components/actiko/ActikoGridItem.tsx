@@ -1,70 +1,38 @@
-import type { LucideIcon } from "lucide-react-native";
+import type { ActivityDaySummary } from "@packages/frontend-shared/hooks/activityDaySummary";
 import { Platform, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
-import { ActionCard } from "./ActionCard";
 import { ActivityCard } from "./ActivityCard";
 import type { Activity } from "./useActikoPage";
 
-type ActionItem = {
-  id: string;
-  icon: LucideIcon;
-  label: string;
-  onPress: () => void;
-};
-
-// biome-ignore lint/suspicious/noExplicitAny: grid items are heterogeneous (activities + action placeholders + spacers)
-type GridItem = { id: string; [key: string]: any };
-
 export function ActikoGridItem({
-  item,
+  activity,
   index,
   reduceMotion,
-  iconBlobMap,
-  hasLogsForActivity,
-  onActivityPress,
-  onActivityEdit,
-  actions,
+  summary,
+  iconBlob,
+  onPress,
+  onEdit,
 }: {
-  item: GridItem;
+  activity: Activity;
   index: number;
   reduceMotion: boolean;
-  iconBlobMap: Map<
-    string,
-    { activityId: string; base64: string; mimeType: string }
-  >;
-  hasLogsForActivity: (id: string) => boolean;
-  onActivityPress: (activity: Activity) => void;
-  onActivityEdit: (activity: Activity) => void;
-  actions: ActionItem[];
+  summary: ActivityDaySummary | undefined;
+  iconBlob:
+    | { activityId: string; base64: string; mimeType: string }
+    | undefined;
+  onPress: (activity: Activity) => void;
+  onEdit: (activity: Activity) => void;
 }) {
-  if (item.id.startsWith("__spacer_")) {
-    return <View style={{ flex: 1 }} />;
-  }
-
-  const action = actions.find((a) => a.id === item.id);
-  let card: React.ReactNode;
-
-  if (action) {
-    card = (
-      <ActionCard
-        icon={action.icon}
-        label={action.label}
-        onPress={action.onPress}
-      />
-    );
-  } else {
-    const activity = item as Activity;
-    card = (
-      <ActivityCard
-        activity={activity}
-        isDone={hasLogsForActivity(activity.id)}
-        iconBlob={iconBlobMap.get(activity.id)}
-        onPress={() => onActivityPress(activity)}
-        onEdit={() => onActivityEdit(activity)}
-      />
-    );
-  }
+  const card = (
+    <ActivityCard
+      activity={activity}
+      summary={summary}
+      iconBlob={iconBlob}
+      onPress={() => onPress(activity)}
+      onEdit={() => onEdit(activity)}
+    />
+  );
 
   if (Platform.OS === "web" || reduceMotion) {
     return <View style={{ flex: 1 }}>{card}</View>;

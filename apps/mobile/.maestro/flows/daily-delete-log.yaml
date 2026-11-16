@@ -1,8 +1,12 @@
 appId: ${MAESTRO_APP_ID}
 ---
-# Daily ログ削除（2段階）: ログをタップ→削除要求→削除確認
+# 「この日の記録」のログ削除（2段階）: ログをタップ→削除要求→削除確認
+- scrollUntilVisible:
+    element:
+      text: "E2Eランニング, .*"
+    direction: DOWN
 - tapOn:
-    text: "E2Eランニング.*"
+    text: "E2Eランニング, .*"
 - assertVisible:
     id: daily.editLog.dialog
 - tapOn:

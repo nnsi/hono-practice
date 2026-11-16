@@ -9,48 +9,56 @@ import {
 } from "lucide-react";
 
 import { CalendarPopover } from "../common/CalendarPopover";
+import { DailyTaskSection } from "../daily/DailyTaskSection";
+import { EditLogDialog } from "../daily/EditLogDialog";
 import { ActivityCard } from "./ActivityCard";
 import { CreateActivityDialog } from "./CreateActivityDialog";
+import { DayLogList } from "./DayLogList";
 import { EditActivityDialog } from "./EditActivityDialog";
 import { RecordDialog } from "./RecordDialog";
 import { ReorderActivitiesDialog } from "./ReorderActivitiesDialog";
 import { useActikoPage } from "./useActikoPage";
 
+/** 記録グリッド・その日の記録・その日のタスクを 1 画面にまとめたページ（Actiko + Daily 統合の試作） */
 export function ActikoPage() {
   const { t } = useTranslation("actiko");
+  const { t: tActivity } = useTranslation("activity");
+  const page = useActikoPage();
   const {
     date,
     setDate,
     goToPrev,
     goToNext,
     isToday,
-    activities,
+    gridActivities,
     iconBlobMap,
+    summaryByActivity,
+    logs,
+    kindsMap,
+    activitiesMap,
     selectedActivity,
     setSelectedActivity,
-    dialogOpen,
-    setDialogOpen,
     createActivityOpen,
     setCreateActivityOpen,
     editActivity,
     setEditActivity,
+    editingLog,
+    setEditingLog,
     calendarOpen,
     setCalendarOpen,
-    hasLogsForActivity,
-    handleActivityClick,
-    handleActivityChanged,
     reorderOpen,
     setReorderOpen,
-  } = useActikoPage();
+  } = page;
 
   return (
     <div className="bg-white">
-      {/* ヘッダー */}
+      {/* 日付ヘッダー */}
       <header className="sticky top-0 sticky-header z-10">
         <div className="flex items-center justify-center gap-3 px-4 h-12">
           <button
             type="button"
             onClick={goToPrev}
+            aria-label={tActivity("daily.previousDay")}
             className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronLeft size={20} className="text-gray-500" />
@@ -66,6 +74,7 @@ export function ActikoPage() {
           <button
             type="button"
             onClick={goToNext}
+            aria-label={tActivity("daily.nextDay")}
             className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <ChevronRight size={20} className="text-gray-500" />
@@ -79,61 +88,83 @@ export function ActikoPage() {
         />
       </header>
 
-      {/* アクティビティグリッド */}
-      <main className="p-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 stagger">
-          {activities.map((activity) => (
-            <ActivityCard
-              key={activity.id}
-              activity={activity}
-              isDone={hasLogsForActivity(activity.id)}
-              iconBlob={iconBlobMap.get(activity.id)}
-              onClick={() => handleActivityClick(activity)}
-              onEdit={() => setEditActivity(activity)}
-            />
-          ))}
-          {/* 新規追加カード */}
-          <button
-            type="button"
-            onClick={() => setCreateActivityOpen(true)}
-            className="flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-gray-300 min-h-[120px] select-none hover:border-gray-400 hover:bg-gray-50 transition-all group"
-          >
-            <Plus
-              size={28}
-              className="text-gray-400 group-hover:text-gray-600 mb-1"
-            />
-            <span className="text-xs text-gray-400 group-hover:text-gray-600">
-              {t("add")}
-            </span>
-          </button>
-          {/* 並び替えカード */}
-          {activities.length >= 2 && (
+      <main className="p-4 space-y-5">
+        {/* 記録グリッド: タップで記録、カードにその日の合計を出す */}
+        <section>
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-2 stagger">
+            {gridActivities.map((activity) => (
+              <ActivityCard
+                key={activity.id}
+                activity={activity}
+                summary={summaryByActivity.get(activity.id)}
+                iconBlob={iconBlobMap.get(activity.id)}
+                onClick={() => setSelectedActivity(activity)}
+                onEdit={() => setEditActivity(activity)}
+              />
+            ))}
+          </div>
+          {/* 追加・並び替えはグリッドのカードにせず、高さを取らない操作行に置く */}
+          <div className="flex items-center justify-end gap-1 mt-1.5">
+            {gridActivities.length >= 2 && (
+              <button
+                type="button"
+                onClick={() => setReorderOpen(true)}
+                className="flex items-center gap-1 px-2 py-1.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ArrowUpDown size={13} />
+                {t("reorder")}
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => setReorderOpen(true)}
-              className="flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-gray-300 min-h-[120px] select-none hover:border-gray-400 hover:bg-gray-50 transition-all group"
+              onClick={() => setCreateActivityOpen(true)}
+              className="flex items-center gap-1 px-2 py-1.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <ArrowUpDown
-                size={28}
-                className="text-gray-400 group-hover:text-gray-600 mb-1"
-              />
-              <span className="text-xs text-gray-400 group-hover:text-gray-600">
-                {t("reorder")}
-              </span>
+              <Plus size={13} />
+              {t("add")}
             </button>
-          )}
-        </div>
+          </div>
+        </section>
+
+        {/* その日の記録: タップで編集・削除 */}
+        <section>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+              {tActivity("daily.recordsSection")}
+            </h2>
+            {logs.length > 0 && (
+              <span className="text-xs text-gray-400 tabular-nums">
+                {logs.length}
+              </span>
+            )}
+          </div>
+          <DayLogList
+            logs={logs}
+            activitiesMap={activitiesMap}
+            kindsMap={kindsMap}
+            onSelect={setEditingLog}
+          />
+        </section>
+
+        {/* その日のタスク */}
+        <DailyTaskSection {...page} />
       </main>
 
       {/* 記録ダイアログ */}
-      {dialogOpen && selectedActivity && (
+      {selectedActivity && (
         <RecordDialog
           activity={selectedActivity}
           date={date}
-          onClose={() => {
-            setDialogOpen(false);
-            setSelectedActivity(null);
-          }}
+          onClose={() => setSelectedActivity(null)}
+        />
+      )}
+
+      {/* 記録の編集ダイアログ */}
+      {editingLog && (
+        <EditLogDialog
+          log={editingLog}
+          activity={activitiesMap.get(editingLog.activityId) ?? null}
+          onClose={() => setEditingLog(null)}
         />
       )}
 
@@ -141,7 +172,7 @@ export function ActikoPage() {
       {createActivityOpen && (
         <CreateActivityDialog
           onClose={() => setCreateActivityOpen(false)}
-          onCreated={handleActivityChanged}
+          onCreated={() => {}}
         />
       )}
 
@@ -150,14 +181,14 @@ export function ActikoPage() {
         <EditActivityDialog
           activity={editActivity}
           onClose={() => setEditActivity(null)}
-          onUpdated={handleActivityChanged}
+          onUpdated={() => {}}
         />
       )}
 
       {/* 並び替えダイアログ */}
       {reorderOpen && (
         <ReorderActivitiesDialog
-          activities={activities}
+          activities={gridActivities}
           onClose={() => setReorderOpen(false)}
         />
       )}

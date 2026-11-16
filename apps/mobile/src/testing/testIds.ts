@@ -7,7 +7,6 @@ export const mobileTestIds = {
   },
   tabs: {
     home: "tabs.home",
-    daily: "tabs.daily",
     stats: "tabs.stats",
     goals: "tabs.goals",
     tasks: "tabs.tasks",
@@ -78,9 +77,10 @@ export const mobileTestIds = {
   },
   actiko: {
     screen: "actiko.screen",
+    addActivityButton: "actiko.addActivity",
+    reorderButton: "actiko.reorder",
   },
   daily: {
-    screen: "daily.screen",
     addActivityButton: "daily.addActivity",
   },
   stats: {

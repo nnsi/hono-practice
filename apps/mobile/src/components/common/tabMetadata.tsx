@@ -2,7 +2,6 @@ import type { TabKey } from "@packages/domain/user/tabPreferenceSchema";
 import type { LucideIcon } from "lucide-react-native";
 import {
   BarChart3,
-  CalendarDays,
   CheckSquare,
   FileText,
   LayoutGrid,
@@ -22,12 +21,6 @@ export const MOBILE_TAB_METADATA: Record<TabKey, MobileTabMetadata> = {
     label: "Actiko",
     routeName: "index",
     icon: LayoutGrid,
-  },
-  daily: {
-    key: "daily",
-    label: "Daily",
-    routeName: "daily",
-    icon: CalendarDays,
   },
   stats: {
     key: "stats",

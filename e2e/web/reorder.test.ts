@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { activityGridSection, createActivity } from "../helpers/actiko";
 import { login } from "../helpers/auth";
 import { setupBrowser } from "../helpers/browser";
 
@@ -12,15 +13,11 @@ describe("reorder", () => {
 
     // 並び替えには2つ以上のアクティビティが必要
     // 追加のアクティビティを作成
-    await page.click('button:has-text("追加")');
-    await page.fill('input[placeholder="アクティビティ名"]', "並替テスト活動");
-    await page.fill('input[placeholder="回, 分, km など"]', "回");
-    await page.click('button:has-text("作成")');
-    await page.waitForSelector('text="並替テスト活動"', { timeout: 15000 });
+    await createActivity(page, "並替テスト活動", "回");
 
     // ホーム画面でのアクティビティの順序を記録（ActivityCard内のactivity name）
-    const homeActivityNames = page.locator(
-      "main .grid span.text-sm.font-medium",
+    const homeActivityNames = activityGridSection(page).locator(
+      ".grid span.font-medium",
     );
     await homeActivityNames
       .first()
@@ -28,8 +25,12 @@ describe("reorder", () => {
     const firstNameBefore = await homeActivityNames.first().textContent();
 
     // 並び替えボタンが表示される（2つ以上のアクティビティがある場合のみ）
-    await page.waitForSelector('text="並び替え"', { timeout: 15000 });
-    await page.click('button:has-text("並び替え")');
+    const reorderButton = activityGridSection(page).getByRole("button", {
+      name: "並び替え",
+      exact: true,
+    });
+    await reorderButton.waitFor({ state: "visible", timeout: 15000 });
+    await reorderButton.click();
 
     // 並び替えダイアログが開く
     await page.waitForSelector(".modal-backdrop", { timeout: 15000 });

@@ -1,27 +1,19 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { createUseActikoPage } from "@packages/frontend-shared/hooks/useActikoPage";
 
 import { useLiveQuery } from "../../db/useLiveQuery";
-import { useActivities } from "../../hooks/useActivities";
-import { useActivityLogsByDate } from "../../hooks/useActivityLogs";
 import { activityRepository } from "../../repositories/activityRepository";
+import { useDailyPage } from "../daily/useDailyPage";
 
 export type Activity =
   import("@packages/domain/activity/activityRecord").ActivityRecord & {
     _syncStatus: string;
   };
 
-type IconBlob = {
-  activityId: string;
-  base64: string;
-  mimeType: string;
-};
-
-export const useActikoPage = createUseActikoPage<Activity, IconBlob>({
-  react: { useState, useMemo, useCallback },
-  useActivities,
-  useActivityLogsByDate,
+export const useActikoPage = createUseActikoPage({
+  react: { useState, useMemo },
+  useDailyPage,
   useIconBlobs: () =>
     useLiveQuery(
       "activity_icon_blobs",

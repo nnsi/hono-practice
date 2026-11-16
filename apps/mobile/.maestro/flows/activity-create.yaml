@@ -1,9 +1,14 @@
 appId: ${MAESTRO_APP_ID}
 ---
-# アクティビティ新規作成: 「追加|Add」ボタンをタップしてダイアログから作成
+# アクティビティ新規作成: グリッド下の「追加」ボタンをタップしてダイアログから作成
+# 同じ画面のタスク節にも「追加」があるので testID で指定する
 # Maestro Android driver は Unicode inputText 非対応のため ASCII 名で作成
+- scrollUntilVisible:
+    element:
+      id: actiko.addActivity
+    direction: DOWN
 - tapOn:
-    text: "追加|Add"
+    id: actiko.addActivity
 - assertVisible:
     id: actiko.create.dialog
 - tapOn:

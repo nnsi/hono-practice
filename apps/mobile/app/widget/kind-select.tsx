@@ -94,7 +94,7 @@ export default function WidgetKindSelectPage() {
       ExtensionStorage.reloadWidget();
     }
 
-    router.replace("/(tabs)/daily");
+    router.replace("/(tabs)");
   };
 
   if (!activityId || !timerInstanceId) {

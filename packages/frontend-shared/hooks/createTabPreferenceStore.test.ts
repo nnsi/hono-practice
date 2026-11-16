@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from "react";
 
 import {
   DEFAULT_TAB_KEYS,
+  type LocalTabPreference,
   type TabKey,
   createDefaultTabPreference,
 } from "@packages/domain/user/tabPreferenceSchema";
@@ -59,9 +60,7 @@ function baseDeps(over: {
   storage: TabPreferenceStorage;
   transport: TabPreferenceFlushTransport;
   initialLoad: "sync" | "lazy";
-  readSyncInitial?: () => ReturnType<typeof createDefaultTabPreference> & {
-    syncStatus: "synced" | "pending";
-  };
+  readSyncInitial?: () => LocalTabPreference;
 }) {
   return {
     react: { useEffect },
@@ -87,7 +86,7 @@ describe("createTabPreferenceStore", () => {
   describe("lazy initialLoad", () => {
     it("storage の tabPreference を ensureLoaded で読み込む", async () => {
       const stored = {
-        tabs: ["home", "daily"] as TabKey[],
+        tabs: ["home", "stats"] as TabKey[],
         updatedAt: "2026-01-01T00:00:00.000Z",
         syncStatus: "synced" as const,
       };
@@ -104,10 +103,10 @@ describe("createTabPreferenceStore", () => {
 
       await store.ensureLoaded();
       const next = await store.reconcileTabPreferenceFromServer({
-        tabs: ["home", "daily"],
+        tabs: ["home", "stats"],
         updatedAt: "2026-01-01T00:00:00.000Z",
       });
-      expect(next.tabs).toEqual(["home", "daily"]);
+      expect(next.tabs).toEqual(["home", "stats"]);
     });
 
     it("storage が空なら default になる", async () => {
@@ -193,7 +192,7 @@ describe("createTabPreferenceStore", () => {
       const store = createTabPreferenceStore(
         baseDeps({ storage, transport: failing, initialLoad: "lazy" }),
       );
-      await store.savePendingTabPreference(["home", "daily"]);
+      await store.savePendingTabPreference(["home", "stats"]);
       const result = await store.flushPendingTabPreference();
       expect(result.syncStatus).toBe("pending");
       // 再試行タイマーが積まれている

@@ -5,7 +5,7 @@ import { ReorderActivitiesDialog } from "./ReorderActivitiesDialog";
 import type { useActikoPage } from "./useActikoPage";
 
 type PageState = ReturnType<typeof useActikoPage>;
-type Activity = PageState["activities"][number];
+type Activity = PageState["gridActivities"][number];
 
 type ActikoDialogsProps = {
   recordVisible: boolean;
@@ -16,11 +16,13 @@ type ActikoDialogsProps = {
   onCreateClose: () => void;
   editActivity: Activity | null;
   onEditClose: () => void;
-  onActivityChanged: () => void;
   reorderVisible: boolean;
   onReorderClose: () => void;
   activities: Activity[];
 };
+
+// 一覧は useLiveQuery で自動更新されるので、作成・更新後にやることは無い
+const noop = () => {};
 
 export function ActikoDialogs({
   recordVisible,
@@ -31,7 +33,6 @@ export function ActikoDialogs({
   onCreateClose,
   editActivity,
   onEditClose,
-  onActivityChanged,
   reorderVisible,
   onReorderClose,
   activities,
@@ -47,14 +48,14 @@ export function ActikoDialogs({
       <CreateActivityDialog
         visible={createVisible}
         onClose={onCreateClose}
-        onCreated={onActivityChanged}
+        onCreated={noop}
       />
       <EditActivityDialog
         key={editActivity?.id ?? "edit-closed"}
         visible={editActivity !== null}
         onClose={onEditClose}
         activity={editActivity}
-        onUpdated={onActivityChanged}
+        onUpdated={noop}
       />
       <ReorderActivitiesDialog
         visible={reorderVisible}
