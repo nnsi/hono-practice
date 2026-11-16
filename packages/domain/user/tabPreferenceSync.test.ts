@@ -14,18 +14,18 @@ import {
 describe("tabPreferenceSync", () => {
   it("creates a strictly newer pending preference than the current one", () => {
     const current = {
-      ...markTabPreferencePending(["home", "daily", "stats", "goals", "tasks"]),
+      ...markTabPreferencePending(["home", "stats", "goals", "tasks"]),
       updatedAt: "2026-04-12T05:00:00.010Z",
     };
 
     expect(
       createPendingTabPreference(
         current,
-        ["home", "daily", "stats", "goals", "notes"],
+        ["home", "stats", "goals", "notes"],
         new Date("2026-04-12T05:00:00.010Z"),
       ),
     ).toEqual({
-      tabs: ["home", "daily", "stats", "goals", "notes"],
+      tabs: ["home", "stats", "goals", "notes"],
       updatedAt: "2026-04-12T05:00:00.011Z",
       syncStatus: "pending",
     });
@@ -33,17 +33,17 @@ describe("tabPreferenceSync", () => {
 
   it("applies the server result when the flushed request is still current", () => {
     const pending = {
-      ...markTabPreferencePending(["home", "daily", "stats", "goals", "notes"]),
+      ...markTabPreferencePending(["home", "stats", "goals", "notes"]),
       updatedAt: "2026-04-12T05:00:00.010Z",
     };
 
     expect(
       resolveFlushedTabPreference(pending, pending, {
-        tabs: ["home", "daily", "stats", "goals", "notes"],
+        tabs: ["home", "stats", "goals", "notes"],
         updatedAt: "2026-04-12T05:00:00.010Z",
       }),
     ).toEqual({
-      tabs: ["home", "daily", "stats", "goals", "notes"],
+      tabs: ["home", "stats", "goals", "notes"],
       updatedAt: "2026-04-12T05:00:00.010Z",
       syncStatus: "synced",
     });
@@ -51,17 +51,17 @@ describe("tabPreferenceSync", () => {
 
   it("keeps a newer pending preference when an older flush response arrives", () => {
     const request = {
-      ...markTabPreferencePending(["home", "daily", "stats", "goals", "tasks"]),
+      ...markTabPreferencePending(["home", "stats", "goals", "tasks"]),
       updatedAt: "2026-04-12T05:00:00.010Z",
     };
     const current = {
-      ...markTabPreferencePending(["home", "daily", "stats", "goals", "notes"]),
+      ...markTabPreferencePending(["home", "stats", "goals", "notes"]),
       updatedAt: "2026-04-12T05:00:00.011Z",
     };
 
     expect(
       resolveFlushedTabPreference(current, request, {
-        tabs: ["home", "daily", "stats", "goals", "tasks"],
+        tabs: ["home", "stats", "goals", "tasks"],
         updatedAt: "2026-04-12T05:00:00.010Z",
       }),
     ).toEqual(current);
@@ -69,18 +69,18 @@ describe("tabPreferenceSync", () => {
 
   it("keeps the current state when another flush already synced a newer value", () => {
     const request = {
-      ...markTabPreferencePending(["home", "daily", "stats", "goals", "tasks"]),
+      ...markTabPreferencePending(["home", "stats", "goals", "tasks"]),
       updatedAt: "2026-04-12T05:00:00.010Z",
     };
     const current: LocalTabPreference = {
       ...createDefaultLocalTabPreference(),
-      tabs: ["home", "daily", "stats", "goals", "notes"],
+      tabs: ["home", "stats", "goals", "notes"],
       updatedAt: "2026-04-12T05:00:00.011Z",
     };
 
     expect(
       resolveFlushedTabPreference(current, request, {
-        tabs: ["home", "daily", "stats", "goals", "tasks"],
+        tabs: ["home", "stats", "goals", "tasks"],
         updatedAt: "2026-04-12T05:00:00.010Z",
       }),
     ).toEqual(current);
@@ -88,17 +88,17 @@ describe("tabPreferenceSync", () => {
 
   it("keeps a newer pending preference when tabs changed with the same timestamp", () => {
     const request = {
-      ...markTabPreferencePending(["home", "daily", "stats", "goals", "tasks"]),
+      ...markTabPreferencePending(["home", "stats", "goals", "tasks"]),
       updatedAt: "2026-04-12T05:00:00.010Z",
     };
     const current = {
-      ...markTabPreferencePending(["home", "daily", "stats", "goals", "notes"]),
+      ...markTabPreferencePending(["home", "stats", "goals", "notes"]),
       updatedAt: "2026-04-12T05:00:00.010Z",
     };
 
     expect(
       resolveFlushedTabPreference(current, request, {
-        tabs: ["home", "daily", "stats", "goals", "tasks"],
+        tabs: ["home", "stats", "goals", "tasks"],
         updatedAt: "2026-04-12T05:00:00.010Z",
       }),
     ).toEqual(current);

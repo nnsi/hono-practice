@@ -6,6 +6,6 @@ env:
 ---
 - runFlow: flows/dismiss-dev-launcher.yaml
 - runFlow: flows/login.yaml
-- runFlow: flows/open-daily.yaml
+- runFlow: flows/open-home.yaml
 - runFlow: flows/daily-edit-log.yaml
 - runFlow: flows/daily-delete-log.yaml

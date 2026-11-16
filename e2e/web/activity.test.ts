@@ -1,5 +1,6 @@
 import { describe, it } from "vitest";
 
+import { activityCard, createActivity } from "../helpers/actiko";
 import { login } from "../helpers/auth";
 import { setupBrowser } from "../helpers/browser";
 
@@ -10,12 +11,8 @@ describe("activity", () => {
     const page = getPage();
     await login(page, "e2e@example.com", "password123");
 
-    await page.click('button:has-text("追加")');
-    await page.fill('input[placeholder="アクティビティ名"]', "E2Eテスト活動");
-    await page.fill('input[placeholder="回, 分, km など"]', "回");
-    await page.click('button:has-text("作成")');
-
-    await page.waitForSelector('text="E2Eテスト活動"', { timeout: 15000 });
+    // グリッド下の「追加」から作成し、グリッドにカードが出る
+    await createActivity(page, "E2Eテスト活動", "回");
   });
 
   it("アクティビティ記録ダイアログで記録できる", async () => {
@@ -23,8 +20,10 @@ describe("activity", () => {
     await login(page, "e2e@example.com", "password123");
 
     // シード済み「E2Eランニング」カードを押下
-    await page.waitForSelector('text="E2Eランニング"', { timeout: 15000 });
-    await page.click('text="E2Eランニング"');
+    // 「この日の記録」にも同名の行が出るので、グリッドのカードに絞る
+    const runningCard = activityCard(page, "E2Eランニング");
+    await runningCard.waitFor({ state: "visible", timeout: 15000 });
+    await runningCard.click();
 
     // ModalOverlay が開く
     await page.waitForSelector(".modal-backdrop", { timeout: 15000 });
@@ -47,11 +46,7 @@ describe("activity", () => {
     await login(page, "e2e@example.com", "password123");
 
     // 編集用にアクティビティを新規作成（シード済みデータを壊さない）
-    await page.click('button:has-text("追加")');
-    await page.fill('input[placeholder="アクティビティ名"]', "編集対象活動");
-    await page.fill('input[placeholder="回, 分, km など"]', "回");
-    await page.click('button:has-text("作成")');
-    await page.waitForSelector('text="編集対象活動"', { timeout: 15000 });
+    await createActivity(page, "編集対象活動", "回");
 
     // カードの鉛筆アイコンをクリック
     const card = page
@@ -68,8 +63,11 @@ describe("activity", () => {
     await nameInput.fill("編集済み活動");
     await page.click('button:has-text("保存")');
 
-    // 更新後の名前が表示される
-    await page.waitForSelector('text="編集済み活動"', { timeout: 15000 });
+    // 更新後の名前がグリッドのカードに表示される
+    await activityCard(page, "編集済み活動").waitFor({
+      state: "visible",
+      timeout: 15000,
+    });
   });
 
   it("アクティビティを削除できる", async () => {
@@ -77,11 +75,7 @@ describe("activity", () => {
     await login(page, "e2e@example.com", "password123");
 
     // 削除用にアクティビティを新規作成
-    await page.click('button:has-text("追加")');
-    await page.fill('input[placeholder="アクティビティ名"]', "削除対象活動");
-    await page.fill('input[placeholder="回, 分, km など"]', "回");
-    await page.click('button:has-text("作成")');
-    await page.waitForSelector('text="削除対象活動"', { timeout: 15000 });
+    await createActivity(page, "削除対象活動", "回");
 
     // 編集ダイアログを開く
     const card = page

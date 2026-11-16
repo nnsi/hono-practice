@@ -14,7 +14,7 @@ describe("classifyStartupRoute", () => {
   it.each([
     ["another top-level deep link", ["upgrade"]],
     ["a nested note deep link", ["notes", "note-id"]],
-    ["a tab deep link", ["(tabs)", "daily"]],
+    ["a tab deep link", ["(tabs)", "stats"]],
   ])("preserves %s", (_label, segments) => {
     expect(classifyStartupRoute(segments)).toBe("explicit");
   });

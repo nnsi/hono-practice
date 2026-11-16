@@ -16,7 +16,6 @@ import { mobileTestIds } from "../../src/testing/testIds";
 
 const TAB_TEST_IDS: Record<keyof typeof MOBILE_TAB_METADATA, string> = {
   home: mobileTestIds.tabs.home,
-  daily: mobileTestIds.tabs.daily,
   stats: mobileTestIds.tabs.stats,
   goals: mobileTestIds.tabs.goals,
   tasks: mobileTestIds.tabs.tasks,
@@ -131,11 +130,12 @@ export default function TabLayout() {
         }}
       >
         <Tabs.Screen name="index" options={{ title: "Actiko" }} />
-        <Tabs.Screen name="daily" options={{ title: "Daily" }} />
         <Tabs.Screen name="stats" options={{ title: "Stats" }} />
         <Tabs.Screen name="goals" options={{ title: "Goal" }} />
         <Tabs.Screen name="tasks" options={{ title: "Tasks" }} />
         <Tabs.Screen name="notes" options={{ href: null }} />
+        {/* Daily 画面は Actiko 画面へ統合済み。古いリンク用の転送だけ残す */}
+        <Tabs.Screen name="daily" options={{ href: null }} />
         <Tabs.Screen name="settings" options={{ href: null }} />
         <Tabs.Screen name="contact" options={{ href: null }} />
       </Tabs>

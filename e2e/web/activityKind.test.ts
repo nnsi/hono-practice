@@ -1,15 +1,12 @@
-import type { Page } from "playwright";
 import { describe, it } from "vitest";
 
+import {
+  activityCard,
+  logRow,
+  openCreateActivityDialog,
+} from "../helpers/actiko";
 import { login } from "../helpers/auth";
 import { setupBrowser } from "../helpers/browser";
-
-async function openCreateActivityDialog(page: Page) {
-  await page.click('button:has-text("追加")');
-  await page
-    .locator('input[placeholder="アクティビティ名"]')
-    .waitFor({ state: "visible", timeout: 15000 });
-}
 
 describe("activity kinds", () => {
   const { getPage } = setupBrowser();
@@ -29,11 +26,12 @@ describe("activity kinds", () => {
     await page.click('button:has-text("+ 種類を追加")');
     await page.locator('input[placeholder="種類名"]').nth(1).fill("夜");
 
-    await page.click('button:has-text("作成")');
-    await page.waitForSelector('text="種類付活動"', { timeout: 15000 });
+    await page.click('.modal-backdrop button:has-text("作成")');
+    const card = activityCard(page, "種類付活動");
+    await card.waitFor({ state: "visible", timeout: 15000 });
 
     // 記録ダイアログを開いて種類が選べる
-    await page.click('text="種類付活動"');
+    await card.click();
     await page.waitForSelector(".modal-backdrop", { timeout: 15000 });
     const modal = page.locator(".modal-backdrop");
     await modal.locator('button:has-text("朝")').waitFor({ state: "visible" });
@@ -53,13 +51,10 @@ describe("activity kinds", () => {
       timeout: 15000,
     });
 
-    // Daily に遷移してメモ・種類付きで記録されたことを確認
-    await page.click('a[href="/daily"]');
-    await page.waitForURL("**/daily", { timeout: 15000 });
-    const logCard = page
-      .locator("button")
-      .filter({ hasText: "種類付活動" })
-      .filter({ hasText: "5回" });
-    await logCard.first().waitFor({ state: "visible", timeout: 15000 });
+    // 同じ画面の「この日の記録」に、種類・メモ付きで記録されたことを確認
+    const row = logRow(page, "種類付活動", "5回")
+      .filter({ hasText: "朝" })
+      .filter({ hasText: "気持ちよかった" });
+    await row.first().waitFor({ state: "visible", timeout: 15000 });
   });
 });

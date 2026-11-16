@@ -31,6 +31,9 @@ export const mobileTestIdsExt = {
     mainButton: "recording.check.main",
     kindButton: (id: string) => `recording.check.kind.${id}`,
   },
+  dayLog: {
+    row: (id: string) => `actiko.dayLog.row.${id}`,
+  },
   dateNav: {
     prev: "dateNav.prev",
     next: "dateNav.next",

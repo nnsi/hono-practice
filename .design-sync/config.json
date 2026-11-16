@@ -49,7 +49,6 @@
     "ModalOverlay": { "cardMode": "single", "primaryStory": "Dialog" },
     "CSVExportModal": { "cardMode": "single", "primaryStory": "Default" },
     "CSVImportModal": { "cardMode": "single", "primaryStory": "Default" },
-    "CreateLogDialog": { "cardMode": "single", "primaryStory": "SelectActivity" },
     "EditLogDialog": { "cardMode": "single", "primaryStory": "Default" },
     "CreateGoalDialog": { "cardMode": "single", "primaryStory": "Default" },
     "CreateApiKeyDialog": { "cardMode": "single", "primaryStory": "Default" },

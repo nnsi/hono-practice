@@ -1,8 +1,6 @@
 {
-  "daily.selectActivity": "Select Activity",
-  "daily.noActivities": "No activities",
   "daily.noRecords": "No records",
-  "daily.activitySection": "Activities",
+  "daily.recordsSection": "Records",
   "daily.tasksSection": "Tasks",
   "daily.addButton": "Add",
   "daily.noTasks": "No tasks",

@@ -24,7 +24,7 @@ type UseDailyPageDeps<
   TRawTask extends DailyTask = DailyTask,
 > = ScheduledTaskSourceDeps & {
   react: Pick<ReactHooks, "useState" | "useMemo" | "useCallback">;
-  useActivities: () => { activities: TActivity[] };
+  useActivities: () => { activities: TActivity[]; isReady?: boolean };
   useActivityLogsByDate: (date: string) => { logs: ActivityLogBase[] };
   useTasksByDate: (date: string) => TRawTask[] | undefined;
   useAllKinds: () => TKind[] | undefined;
@@ -83,7 +83,7 @@ export function createUseDailyPage<
     const [taskCreateDialogOpen, setTaskCreateDialogOpen] = useState(false);
     const [calendarOpen, setCalendarOpen] = useState(false);
 
-    const { activities } = useActivities();
+    const { activities, isReady: activitiesReady = true } = useActivities();
     const { logs } = useActivityLogsByDate(date);
     const rawTasks = useTasksByDate(date);
     const allKinds = useAllKinds();
@@ -173,6 +173,7 @@ export function createUseDailyPage<
       goToNext,
       isToday,
       activities,
+      activitiesReady,
       logs,
       kindsMap,
       activitiesMap,

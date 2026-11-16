@@ -1,8 +1,6 @@
 {
-  "daily.selectActivity": "アクティビティを選択",
-  "daily.noActivities": "アクティビティがありません",
   "daily.noRecords": "記録がありません",
-  "daily.activitySection": "アクティビティ",
+  "daily.recordsSection": "この日の記録",
   "daily.tasksSection": "タスク",
   "daily.addButton": "追加",
   "daily.noTasks": "タスクはありません",
