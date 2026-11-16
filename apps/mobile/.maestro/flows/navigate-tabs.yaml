@@ -3,8 +3,6 @@ appId: ${MAESTRO_APP_ID}
 - tapOn:
     id: tabs.home
 - tapOn:
-    id: tabs.daily
-- tapOn:
     id: tabs.stats
 - tapOn:
     id: tabs.goals

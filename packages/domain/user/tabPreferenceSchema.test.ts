@@ -3,55 +3,54 @@ import { describe, expect, it } from "vitest";
 import {
   applyServerTabPreference,
   canAddVisibleTab,
+  coerceLocalTabPreference,
   coerceTabPreference,
+  createDefaultLocalTabPreference,
   createDefaultTabPreference,
   getHiddenTabKeys,
   hideTabKey,
   markTabPreferencePending,
+  normalizeStoredTabKeys,
   normalizeTabKeys,
   reorderTabKeys,
   showTabKey,
+  tabPreferenceSchema,
 } from "./tabPreferenceSchema";
 
 describe("tabPreferenceSchema", () => {
+  const defaultTabs = () => createDefaultLocalTabPreference().tabs;
+
   it("hideTabKey removes a visible custom tab", () => {
-    expect(hideTabKey(createDefaultTabPreference().tabs, "tasks")).toEqual([
+    expect(hideTabKey(defaultTabs(), "tasks")).toEqual([
       "home",
-      "daily",
       "stats",
       "goals",
     ]);
   });
 
-  it("showTabKey returns undefined when visible tabs are already full", () => {
-    expect(
-      showTabKey(createDefaultTabPreference().tabs, "notes"),
-    ).toBeUndefined();
+  it("showTabKey returns the tabs unchanged when the key is already visible", () => {
+    expect(showTabKey(defaultTabs(), "tasks")).toEqual(defaultTabs());
   });
 
   it("showTabKey appends a hidden tab when there is room", () => {
-    const visibleTabs = hideTabKey(createDefaultTabPreference().tabs, "tasks");
-
-    expect(showTabKey(visibleTabs, "notes")).toEqual([
+    expect(showTabKey(defaultTabs(), "notes")).toEqual([
       "home",
-      "daily",
       "stats",
       "goals",
+      "tasks",
       "notes",
     ]);
   });
 
   it("reorderTabKeys keeps home fixed and reorders the rest", () => {
-    expect(reorderTabKeys(createDefaultTabPreference().tabs, 4, 1)).toEqual([
+    expect(reorderTabKeys(defaultTabs(), 3, 1)).toEqual([
       "home",
       "tasks",
-      "daily",
       "stats",
       "goals",
     ]);
-    expect(reorderTabKeys(createDefaultTabPreference().tabs, 0, 2)).toEqual([
+    expect(reorderTabKeys(defaultTabs(), 0, 2)).toEqual([
       "home",
-      "daily",
       "stats",
       "goals",
       "tasks",
@@ -59,10 +58,10 @@ describe("tabPreferenceSchema", () => {
   });
 
   it("getHiddenTabKeys returns tabs that are not visible", () => {
-    expect(
-      getHiddenTabKeys(["home", "daily", "stats", "goals", "tasks"]),
-    ).toEqual(["notes"]);
-    expect(getHiddenTabKeys(["home", "daily", "notes"])).toEqual([
+    expect(getHiddenTabKeys(["home", "stats", "goals", "tasks"])).toEqual([
+      "notes",
+    ]);
+    expect(getHiddenTabKeys(["home", "notes"])).toEqual([
       "stats",
       "goals",
       "tasks",
@@ -71,13 +70,13 @@ describe("tabPreferenceSchema", () => {
 
   it("applyServerTabPreference keeps a newer pending change", () => {
     const pending = {
-      ...markTabPreferencePending(["home", "daily", "stats", "goals", "notes"]),
+      ...markTabPreferencePending(["home", "stats", "goals", "notes"]),
       updatedAt: "2099-04-12T10:00:00.000Z",
     };
 
     expect(
       applyServerTabPreference(pending, {
-        tabs: ["home", "daily", "stats", "goals", "tasks"],
+        tabs: ["home", "stats", "goals", "tasks"],
         updatedAt: "2099-04-12T09:59:00.000Z",
       }),
     ).toEqual(pending);
@@ -86,14 +85,14 @@ describe("tabPreferenceSchema", () => {
   it("applyServerTabPreference applies a newer server value", () => {
     expect(
       applyServerTabPreference(
-        markTabPreferencePending(["home", "daily", "stats", "goals"]),
+        markTabPreferencePending(["home", "stats", "goals"]),
         {
-          tabs: ["home", "daily", "notes", "goals", "tasks"],
+          tabs: ["home", "notes", "goals", "tasks"],
           updatedAt: "2099-04-12T10:01:00.000Z",
         },
       ),
     ).toEqual({
-      tabs: ["home", "daily", "notes", "goals", "tasks"],
+      tabs: ["home", "notes", "goals", "tasks"],
       updatedAt: "2099-04-12T10:01:00.000Z",
       syncStatus: "synced",
     });
@@ -109,13 +108,81 @@ describe("tabPreferenceSchema", () => {
   });
 
   it("normalizeTabKeys rejects malformed tab arrays", () => {
-    expect(normalizeTabKeys(["home", "daily", "daily"])).toEqual(
-      createDefaultTabPreference().tabs,
-    );
+    expect(normalizeTabKeys(["home", "stats", "stats"])).toEqual(defaultTabs());
   });
 
   it("canAddVisibleTab reflects whether another tab can be shown", () => {
-    expect(canAddVisibleTab(["home", "daily", "stats"])).toBe(true);
-    expect(canAddVisibleTab(createDefaultTabPreference().tabs)).toBe(false);
+    expect(canAddVisibleTab(["home", "stats"])).toBe(true);
+    expect(canAddVisibleTab(defaultTabs())).toBe(true);
+    expect(canAddVisibleTab(["home", "stats", "goals", "tasks", "notes"])).toBe(
+      false,
+    );
+  });
+
+  describe("廃止済みの daily タブ", () => {
+    const storedWithDaily = ["home", "daily", "stats", "goals", "tasks"];
+
+    it("保存値としては受理し、そのまま保持する", () => {
+      const parsed = tabPreferenceSchema.safeParse({
+        tabs: storedWithDaily,
+        updatedAt: "2099-04-12T10:00:00.000Z",
+      });
+      expect(parsed.success).toBe(true);
+      expect(normalizeStoredTabKeys(storedWithDaily)).toEqual(storedWithDaily);
+      expect(
+        coerceTabPreference({
+          tabs: storedWithDaily,
+          updatedAt: "2099-04-12T10:00:00.000Z",
+        }).tabs,
+      ).toEqual(storedWithDaily);
+    });
+
+    it("保存値の既定は統合前クライアント向けに daily を含む", () => {
+      expect(createDefaultTabPreference().tabs).toEqual(storedWithDaily);
+    });
+
+    it("表示用の正規化では順序を保って daily だけ落とす", () => {
+      expect(normalizeTabKeys(storedWithDaily)).toEqual([
+        "home",
+        "stats",
+        "goals",
+        "tasks",
+      ]);
+      expect(normalizeTabKeys(["home", "notes", "daily", "tasks"])).toEqual([
+        "home",
+        "notes",
+        "tasks",
+      ]);
+    });
+
+    it("ローカル設定とサーバー反映後の設定に daily を残さない", () => {
+      expect(
+        coerceLocalTabPreference({
+          tabs: storedWithDaily,
+          updatedAt: "2099-04-12T10:00:00.000Z",
+          syncStatus: "synced",
+        }).tabs,
+      ).toEqual(["home", "stats", "goals", "tasks"]);
+      expect(
+        applyServerTabPreference(createDefaultLocalTabPreference(), {
+          tabs: ["home", "daily", "notes"],
+          updatedAt: "2099-04-12T10:00:00.000Z",
+        }).tabs,
+      ).toEqual(["home", "notes"]);
+    });
+
+    it("daily を落として空いた枠に別のタブを追加できる", () => {
+      expect(
+        canAddVisibleTab(["home", "daily", "stats", "goals", "tasks"]),
+      ).toBe(true);
+      expect(
+        showTabKey(["home", "daily", "stats", "goals", "tasks"], "notes"),
+      ).toEqual(["home", "stats", "goals", "tasks", "notes"]);
+      expect(getHiddenTabKeys(["home", "daily", "stats"])).toEqual([
+        "goals",
+        "tasks",
+        "notes",
+      ]);
+    });
   });
 });

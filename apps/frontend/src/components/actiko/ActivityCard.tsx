@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 
+import {
+  type ActivityDaySummary,
+  formatActivityDaySummary,
+} from "@packages/frontend-shared/hooks/activityDaySummary";
+import { formatQuantityWithUnit } from "@packages/frontend-shared/utils";
 import { Pencil } from "lucide-react";
 
 import { activityRepository } from "../../db/activityRepository";
@@ -7,18 +12,23 @@ import type { DexieActivity, DexieActivityIconBlob } from "../../db/schema";
 
 export function ActivityCard({
   activity,
-  isDone,
+  summary,
   iconBlob,
   onClick,
   onEdit,
 }: {
   activity: DexieActivity;
-  isDone: boolean;
+  summary?: ActivityDaySummary;
   iconBlob?: DexieActivityIconBlob;
   onClick: () => void;
   onEdit: () => void;
 }) {
   const [imageError, setImageError] = useState(false);
+  // 記録済みならその日の合計、数量の無い記録だけなら件数。未記録なら null
+  const doneLabel = formatActivityDaySummary(summary, (total) =>
+    formatQuantityWithUnit(total, activity.quantityUnit),
+  );
+  const isDone = doneLabel !== null;
 
   useEffect(() => {
     if (activity.iconType !== "upload") return;
@@ -41,7 +51,7 @@ export function ActivityCard({
           <img
             src={`data:${iconBlob.mimeType};base64,${iconBlob.base64}`}
             alt=""
-            className="w-8 h-8 rounded-lg object-cover"
+            className="w-7 h-7 rounded-lg object-cover"
             onError={() => setImageError(true)}
           />
         );
@@ -51,13 +61,13 @@ export function ActivityCard({
           <img
             src={activity.iconThumbnailUrl || activity.iconUrl || ""}
             alt=""
-            className="w-8 h-8 rounded-lg object-cover"
+            className="w-7 h-7 rounded-lg object-cover"
             onError={() => setImageError(true)}
           />
         );
       }
     }
-    return <span>{activity.emoji || "\ud83d\udcdd"}</span>;
+    return <span>{activity.emoji || "📝"}</span>;
   };
 
   return (
@@ -66,22 +76,26 @@ export function ActivityCard({
         type="button"
         onClick={onClick}
         className={`
-          w-full flex flex-col items-center justify-center p-4 rounded-2xl
-          min-h-[120px] select-none transition-all duration-200
+          w-full flex flex-col items-center justify-center px-1.5 py-2 rounded-2xl
+          min-h-[88px] select-none transition-all duration-200
           active:scale-[0.96] press-effect
           ${
             isDone
-              ? "activity-done shadow-soft"
+              ? "activity-done shadow-soft border"
               : "bg-white shadow-soft hover:shadow-lifted border border-gray-200/50"
           }
         `}
       >
-        <span className="text-3xl mb-2">{renderIcon()}</span>
-        <span className="text-sm font-medium text-center leading-tight text-gray-800">
+        <span className="text-2xl leading-none mb-1.5">{renderIcon()}</span>
+        <span className="w-full text-xs font-medium text-center leading-tight text-gray-800 truncate">
           {activity.name}
         </span>
-        {activity.quantityUnit && (
-          <span className="text-xs text-gray-400 mt-1">
+        {isDone ? (
+          <span className="text-[11px] font-semibold text-teal-700 h-4 leading-4 tabular-nums">
+            {doneLabel}
+          </span>
+        ) : (
+          <span className="text-[11px] text-gray-400 h-4 leading-4">
             {activity.quantityUnit}
           </span>
         )}
@@ -93,9 +107,9 @@ export function ActivityCard({
           e.stopPropagation();
           onEdit();
         }}
-        className="absolute top-1.5 right-1.5 p-2 rounded-full bg-white/80 text-gray-400 active:bg-gray-200 transition-colors"
+        className="absolute top-0 right-0 p-2 rounded-full text-gray-300 active:bg-gray-200 transition-colors"
       >
-        <Pencil size={12} />
+        <Pencil size={11} />
       </button>
     </div>
   );

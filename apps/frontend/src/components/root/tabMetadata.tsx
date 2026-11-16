@@ -3,7 +3,6 @@ import type { ComponentType } from "react";
 import type { TabKey } from "@packages/domain/user/tabPreferenceSchema";
 import {
   BarChart3,
-  CalendarDays,
   CheckSquare,
   FileText,
   LayoutGrid,
@@ -23,12 +22,6 @@ export const WEB_TAB_METADATA: Record<TabKey, WebTabMetadata> = {
     label: "Actiko",
     to: "/actiko",
     icon: LayoutGrid,
-  },
-  daily: {
-    key: "daily",
-    label: "Daily",
-    to: "/daily",
-    icon: CalendarDays,
   },
   stats: {
     key: "stats",

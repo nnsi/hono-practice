@@ -89,4 +89,49 @@ describe("tab customization", () => {
       await homeRow.locator('button:has-text("メニューへ移動")').count(),
     ).toBe(0);
   });
+
+  // Daily タブの廃止で既定の表示は 4 タブになり、5 枠のうち 1 枠が空いている。
+  // worker 内でタブ設定（サーバー保存）を共有するため、最後に既定へ戻して同期完了まで待つ。
+  it("既定の空き枠に Notes を追加してボトムナビから開ける", async () => {
+    const page = getPage();
+    await login(page, "e2e@example.com", "password123");
+
+    // 廃止した Daily タブはボトムナビにも設定の一覧にも出ない
+    const nav = page.locator("nav");
+    expect(await nav.locator('a[href="/daily"]').count()).toBe(0);
+    await navigateToSettings(page);
+    await page.waitForSelector('text="タブカスタマイズ"', { timeout: 15000 });
+    expect(
+      await page.locator(TAB_ROW_SELECTOR).filter({ hasText: "Daily" }).count(),
+    ).toBe(0);
+
+    // 他のタブを外さなくても Notes を表示に追加できる
+    const hiddenNotesRow = page
+      .locator(`${TAB_ROW_SELECTOR}.border-dashed`)
+      .filter({ hasText: "Notes" });
+    await hiddenNotesRow.first().waitFor({ state: "visible", timeout: 15000 });
+    await hiddenNotesRow.locator('button:has-text("タブに表示")').click();
+
+    const visibleNotesRow = page
+      .locator(`${TAB_ROW_SELECTOR}:not(.border-dashed)`)
+      .filter({ hasText: "Notes" });
+    await visibleNotesRow.first().waitFor({ state: "visible", timeout: 15000 });
+    expect(
+      await page.locator('text="表示できるのは 5 タブまでです"').count(),
+    ).toBe(0);
+
+    // ボトムナビに Notes が出て、そこから開ける
+    await nav.locator('a[href="/notes"]').click();
+    await page.waitForURL("**/notes", { timeout: 15000 });
+
+    // 既定（Notes はメニューのみ）へ戻す
+    await navigateToSettings(page);
+    await visibleNotesRow.first().waitFor({ state: "visible", timeout: 15000 });
+    await visibleNotesRow.locator('button:has-text("メニューへ移動")').click();
+    await hiddenNotesRow.first().waitFor({ state: "visible", timeout: 15000 });
+    await page.waitForSelector('text="未同期"', {
+      state: "detached",
+      timeout: 15000,
+    });
+  });
 });

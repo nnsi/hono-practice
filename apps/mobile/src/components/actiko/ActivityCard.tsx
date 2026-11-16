@@ -1,5 +1,10 @@
 import { useEffect } from "react";
 
+import {
+  type ActivityDaySummary,
+  formatActivityDaySummary,
+} from "@packages/frontend-shared/hooks/activityDaySummary";
+import { formatQuantityWithUnit } from "@packages/frontend-shared/utils/statsFormatting";
 import { Pencil } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
 
@@ -24,7 +29,7 @@ type ActivityCardProps = {
     iconUrl?: string | null;
     iconThumbnailUrl?: string | null;
   };
-  isDone: boolean;
+  summary?: ActivityDaySummary;
   iconBlob?: IconBlob;
   onPress: () => void;
   onEdit: () => void;
@@ -42,12 +47,17 @@ const doneBg = { backgroundColor: "#f0fdfa" };
 
 export function ActivityCard({
   activity,
-  isDone,
+  summary,
   iconBlob,
   onPress,
   onEdit,
 }: ActivityCardProps) {
   const { colors } = useThemeContext();
+  // 記録済みならその日の合計、数量の無い記録だけなら件数。未記録なら null
+  const doneLabel = formatActivityDaySummary(summary, (total) =>
+    formatQuantityWithUnit(total, activity.quantityUnit),
+  );
+  const isDone = doneLabel !== null;
 
   useEffect(() => {
     if (activity.iconType !== "upload") return;
@@ -63,21 +73,10 @@ export function ActivityCard({
     iconBlob,
   ]);
 
-  const renderIcon = () => (
-    <ActivityIcon
-      iconType={activity.iconType}
-      emoji={activity.emoji}
-      iconBlob={iconBlob}
-      iconUrl={activity.iconUrl}
-      iconThumbnailUrl={activity.iconThumbnailUrl}
-      fontSize="text-3xl"
-    />
-  );
-
   return (
     <View className="m-1 relative">
       <TouchableOpacity
-        className={`p-4 rounded-2xl border items-center min-h-[120px] ${
+        className={`px-1.5 py-2 rounded-2xl border items-center justify-center min-h-[88px] ${
           isDone
             ? "border-emerald-200 dark:border-emerald-800"
             : "border-gray-200 dark:border-gray-700"
@@ -92,29 +91,50 @@ export function ActivityCard({
         accessibilityLabel={activity.name}
         testID={mobileTestIds.actikoCard.activity(activity.id)}
       >
-        <View className="mb-2">{renderIcon()}</View>
+        <View className="mb-1.5">
+          <ActivityIcon
+            iconType={activity.iconType}
+            emoji={activity.emoji}
+            iconBlob={iconBlob}
+            iconUrl={activity.iconUrl}
+            iconThumbnailUrl={activity.iconThumbnailUrl}
+            size={28}
+            fontSize="text-2xl"
+          />
+        </View>
         <Text
-          className="text-sm font-medium text-gray-800 dark:text-gray-200 text-center"
+          className="text-xs font-medium text-gray-800 dark:text-gray-200 text-center"
           numberOfLines={1}
         >
           {activity.name}
         </Text>
-        {activity.quantityUnit ? (
-          <Text className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+        {/* 行の高さを固定して、単位の無いカードとも高さを揃える */}
+        {isDone ? (
+          <Text
+            className="text-[11px] font-semibold text-teal-700 h-4"
+            numberOfLines={1}
+          >
+            {doneLabel}
+          </Text>
+        ) : (
+          <Text
+            className="text-[11px] text-gray-400 dark:text-gray-500 h-4"
+            numberOfLines={1}
+          >
             {activity.quantityUnit}
           </Text>
-        ) : null}
+        )}
       </TouchableOpacity>
       {/* Edit button */}
       <TouchableOpacity
-        className="absolute top-1.5 right-1.5 p-2 rounded-full bg-white dark:bg-gray-800/80 dark:bg-gray-700/80"
+        className="absolute top-0 right-0 p-2"
         onPress={onEdit}
         activeOpacity={0.7}
         accessibilityRole="button"
         accessibilityLabel="Edit"
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Pencil size={12} color={colors.textMuted} />
+        <Pencil size={11} color={colors.textMuted} />
       </TouchableOpacity>
     </View>
   );

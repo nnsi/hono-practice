@@ -8,7 +8,6 @@ env:
 - runFlow: flows/dismiss-dev-launcher.yaml
 - runFlow: flows/login.yaml
 - runFlow: flows/open-home.yaml
-- runFlow: flows/open-daily.yaml
 - runFlow: flows/open-stats.yaml
 - runFlow: flows/open-goals.yaml
 - runFlow: flows/open-tasks.yaml

@@ -16,10 +16,9 @@ describe("navigation", () => {
 
     const nav = page.locator("nav");
 
-    // Daily へ
-    await nav.locator('a[href="/daily"]').click();
-    await page.waitForURL("**/daily", { timeout: 15000 });
+    // Daily は Actiko へ統合したので、ホームに日付ヘッダーがあり Daily タブは無い
     await page.waitForSelector(".date-pill-today", { timeout: 15000 });
+    expect(await nav.locator('a[href="/daily"]').count()).toBe(0);
 
     // Stats へ
     await nav.locator('a[href="/stats"]').click();
@@ -36,6 +35,23 @@ describe("navigation", () => {
     // Home へ戻る
     await nav.locator('a[href="/actiko"]').click();
     await page.waitForURL("**/actiko", { timeout: 15000 });
+  });
+
+  it("/daily は /actiko に転送される", async () => {
+    const page = getPage();
+    await login(page, "e2e@example.com", "password123");
+
+    // 統合前のブックマークやタブ設定から /daily に来た場合
+    await page.goto(`${BASE_URL}/daily`);
+    await page.waitForURL(`${BASE_URL}/actiko`, { timeout: 15000 });
+
+    // 旧 Daily の内容（この日の記録・タスク）が Actiko 画面に出ている
+    await page
+      .getByRole("heading", { name: "この日の記録", exact: true })
+      .waitFor({ state: "visible", timeout: 15000 });
+    await page
+      .getByRole("heading", { name: "タスク", exact: true })
+      .waitFor({ state: "visible", timeout: 15000 });
   });
 
   it("ハンバーガーメニューからロケールを切り替えられる", async () => {

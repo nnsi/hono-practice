@@ -1,6 +1,10 @@
 appId: ${MAESTRO_APP_ID}
 ---
-- assertVisible: "アクティビティ|Activities"
+# Actiko 画面のタスク節（旧 Daily）: 「追加」からタスク作成ダイアログを開いて閉じる
+- scrollUntilVisible:
+    element:
+      id: daily.addActivity
+    direction: DOWN
 - tapOn:
     id: daily.addActivity
 - assertVisible:
