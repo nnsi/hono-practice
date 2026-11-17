@@ -5,7 +5,7 @@ import type {
 import type { SyncRevision } from "@packages/domain/sync/syncableRecord";
 
 import type { ActivityDbAdapter } from "./activityDbAdapter";
-import { filterSafeUpserts } from "./syncHelpers";
+import { filterSafeUpserts, restampRowsEditedDuringSync } from "./syncHelpers";
 
 export async function applySyncMarkHelpers(
   adapter: ActivityDbAdapter,
@@ -20,9 +20,19 @@ export async function applySyncMarkHelpers(
   if (op.revisions.length === 0) return;
   switch (op.type) {
     case "markActivitiesSynced":
-      return adapter.updateActivitiesSyncStatus(op.revisions, "synced");
+      await adapter.updateActivitiesSyncStatus(op.revisions, "synced");
+      return restampRowsEditedDuringSync(
+        op.revisions,
+        (ids) => adapter.getActivitiesByIds(ids),
+        (id, updatedAt) => adapter.updateActivity(id, { updatedAt }),
+      );
     case "markActivityKindsSynced":
-      return adapter.updateKindsSyncStatus(op.revisions, "synced");
+      await adapter.updateKindsSyncStatus(op.revisions, "synced");
+      return restampRowsEditedDuringSync(
+        op.revisions,
+        (ids) => adapter.getKindsByIds(ids),
+        (id, updatedAt) => adapter.updateKind(id, { updatedAt }),
+      );
     case "markActivitiesFailed":
       return adapter.updateActivitiesSyncStatus(op.revisions, "failed");
     case "markActivityKindsFailed":

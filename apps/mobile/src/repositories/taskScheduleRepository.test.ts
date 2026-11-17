@@ -64,12 +64,23 @@ describe("Mobile task schedule repository", () => {
         intervalDays: null,
       }),
     ]);
-    await taskScheduleRepository.markTaskSchedulesFailed([created.id]);
+    await taskScheduleRepository.markTaskSchedulesFailed(
+      await taskScheduleRepository.getPendingSyncTaskSchedules(),
+    );
     expect(
       (await taskScheduleRepository.getPendingSyncTaskSchedules())[0]
         ?._syncStatus,
     ).toBe("failed");
-    await taskScheduleRepository.markTaskSchedulesSynced([created.id]);
+    // 送信した版から変わった行は synced にしない
+    await taskScheduleRepository.markTaskSchedulesSynced([
+      { id: created.id, updatedAt: created.updatedAt },
+    ]);
+    expect(
+      await taskScheduleRepository.getPendingSyncTaskSchedules(),
+    ).toHaveLength(1);
+    await taskScheduleRepository.markTaskSchedulesSynced(
+      await taskScheduleRepository.getPendingSyncTaskSchedules(),
+    );
     expect(await taskScheduleRepository.getPendingSyncTaskSchedules()).toEqual(
       [],
     );
@@ -94,7 +105,9 @@ describe("Mobile task schedule repository", () => {
     expect(
       (await taskScheduleRepository.getActiveTaskSchedules())[0]?.title,
     ).toBe("Local");
-    await taskScheduleRepository.markTaskSchedulesSynced([scheduleId]);
+    await taskScheduleRepository.markTaskSchedulesSynced(
+      await taskScheduleRepository.getPendingSyncTaskSchedules(),
+    );
     await taskScheduleRepository.upsertTaskSchedulesFromServer([
       { ...schedule, title: "Stale" },
     ]);

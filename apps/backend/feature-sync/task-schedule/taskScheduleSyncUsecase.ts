@@ -1,14 +1,17 @@
 import type { taskSchedules } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertTaskScheduleRequest } from "@packages/types";
+import type { SyncedRevision } from "@packages/types/sync/response/syncedRevision";
 
 import type { Tracer } from "../../lib/tracer";
+import { toSyncedRevisions } from "../shared/storedUpdatedAt";
 import type { TaskScheduleSyncRepository } from "./taskScheduleSyncRepository";
 
 type TaskScheduleRow = typeof taskSchedules.$inferSelect;
 
 export type SyncResult = {
   syncedIds: string[];
+  syncedRevisions: SyncedRevision[];
   serverWins: TaskScheduleRow[];
   skippedIds: string[];
 };
@@ -104,7 +107,7 @@ function syncTaskSchedules(repo: TaskScheduleSyncRepository, tracer: Tracer) {
     });
 
     if (validTaskSchedules.length === 0) {
-      return { syncedIds: [], serverWins: [], skippedIds };
+      return { syncedIds: [], syncedRevisions: [], serverWins: [], skippedIds };
     }
 
     const upserted = await tracer.span("db.upsertTaskSchedules", () =>
@@ -113,6 +116,7 @@ function syncTaskSchedules(repo: TaskScheduleSyncRepository, tracer: Tracer) {
 
     const syncedIdSet = new Set(upserted.map((r) => r.id));
     const syncedIds = [...syncedIdSet];
+    const syncedRevisions = toSyncedRevisions(upserted);
 
     const missedIds = validTaskSchedules
       .map((t) => t.id)
@@ -131,6 +135,6 @@ function syncTaskSchedules(repo: TaskScheduleSyncRepository, tracer: Tracer) {
       }
     }
 
-    return { syncedIds, serverWins, skippedIds };
+    return { syncedIds, syncedRevisions, serverWins, skippedIds };
   };
 }

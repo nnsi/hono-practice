@@ -9,6 +9,7 @@ import {
 } from "@packages/domain/goal/goalBalance";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertGoalRequest } from "@packages/types";
+import type { SyncedRevision } from "@packages/types/sync/response/syncedRevision";
 
 import type { Tracer } from "../../lib/tracer";
 import type { GoalFreezePeriodSyncRepository } from "../goal-freeze-period/goalFreezePeriodSyncRepository";
@@ -25,6 +26,7 @@ type GoalWithStats = GoalRow & {
 
 export type SyncGoalsResult = {
   syncedIds: string[];
+  syncedRevisions: SyncedRevision[];
   serverWins: GoalRow[];
   skippedIds: string[];
 };

@@ -1,5 +1,6 @@
 export * from "./core/aggregateBinaryLogs";
 export * from "./core/chunkedSync";
+export * from "./core/pushResult";
 export * from "./core/serverTime";
 export * from "./core/syncHttpPolicy";
 export * from "./core/syncResult";

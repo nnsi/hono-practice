@@ -27,7 +27,7 @@ describe("taskScheduleRepositoryLogic", () => {
   it("validates merged updates and switches recurrence atomically", async () => {
     const { repo, store } = setup();
     const row = await repo.createTaskSchedule(input);
-    await repo.markTaskSchedulesSynced([row.id]);
+    await repo.markTaskSchedulesSynced([row]);
     await expect(
       repo.updateTaskSchedule(row.id, {
         recurrenceType: "weekdays",
@@ -71,8 +71,8 @@ describe("taskScheduleRepositoryLogic", () => {
     });
     const deleted = await repo.createTaskSchedule(input);
     await repo.softDeleteTaskSchedule(deleted.id);
-    await repo.markTaskSchedulesSynced([active.id]);
-    await repo.markTaskSchedulesFailed([inactive.id]);
+    await repo.markTaskSchedulesSynced([active]);
+    await repo.markTaskSchedulesFailed([inactive]);
     expect((await repo.getActiveTaskSchedules()).map((row) => row.id)).toEqual([
       active.id,
     ]);
@@ -88,7 +88,7 @@ describe("taskScheduleRepositoryLogic", () => {
     const { repo, store } = setup();
     const pending = await repo.createTaskSchedule(input);
     const newer = await repo.createTaskSchedule(input);
-    await repo.markTaskSchedulesSynced([newer.id]);
+    await repo.markTaskSchedulesSynced([newer]);
     const old = "2000-01-01T00:00:00.000Z";
     await repo.upsertTaskSchedulesFromServer([
       { ...pending, title: "server" },

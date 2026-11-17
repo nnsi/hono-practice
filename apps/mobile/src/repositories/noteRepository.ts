@@ -8,6 +8,7 @@ import {
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
 import { str, strOrNull, toSqlBindable, toSyncStatus } from "./sqlRowHelpers";
+import { updateSyncStatusForRevisions } from "./syncStatusSql";
 
 // --- Row mapping helpers (snake_case SQL -> camelCase TS) ---
 
@@ -110,13 +111,9 @@ const adapter: NoteDbAdapter = {
     );
     return rows.map(mapNoteRow);
   },
-  async updateSyncStatus(ids, status) {
-    const db = await getDatabase();
-    const ph = ids.map(() => "?").join(",");
-    await db.runAsync(`UPDATE note SET sync_status = ? WHERE id IN (${ph})`, [
-      status,
-      ...ids,
-    ]);
+  async updateSyncStatus(revisions, status) {
+    if (revisions.length === 0) return;
+    await updateSyncStatusForRevisions("note", revisions, status);
     dbEvents.emit("notes");
   },
   async bulkUpsertSynced(notes) {

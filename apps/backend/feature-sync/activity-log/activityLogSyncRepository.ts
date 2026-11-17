@@ -9,6 +9,8 @@ import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertActivityLogRequest } from "@packages/types";
 import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 
+import { withStoredUpdatedAt } from "../shared/storedUpdatedAt";
+
 type ActivityLogRow = typeof activityLogs.$inferSelect;
 
 export type ActivityKindWithActivityId = {
@@ -157,19 +159,19 @@ function upsertActivityLogs(db: QueryExecutor) {
       .returning();
 
     const ids = rows.map((r) => r.id);
-    if (ids.length > 0) {
-      await db
-        .update(activityLogs)
-        .set({ updatedAt: sql`NOW()` })
-        .where(
-          and(
-            inArray(activityLogs.id, ids),
-            lt(activityLogs.updatedAt, sql`NOW()`),
-          ),
-        );
-    }
+    if (ids.length === 0) return rows;
+    const bumped = await db
+      .update(activityLogs)
+      .set({ updatedAt: sql`NOW()` })
+      .where(
+        and(
+          inArray(activityLogs.id, ids),
+          lt(activityLogs.updatedAt, sql`NOW()`),
+        ),
+      )
+      .returning();
 
-    return rows;
+    return withStoredUpdatedAt(rows, bumped);
   };
 }
 

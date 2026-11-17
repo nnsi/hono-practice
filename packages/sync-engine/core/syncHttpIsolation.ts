@@ -35,6 +35,10 @@ const emptyResult = (): SyncResult => ({
 function mergeResult(left: SyncResult, right: SyncResult): SyncResult {
   return {
     syncedIds: [...left.syncedIds, ...right.syncedIds],
+    syncedRevisions: [
+      ...(left.syncedRevisions ?? []),
+      ...(right.syncedRevisions ?? []),
+    ],
     skippedIds: [...left.skippedIds, ...right.skippedIds],
     serverWins: [...left.serverWins, ...right.serverWins],
     failures: [...(left.failures ?? []), ...(right.failures ?? [])],

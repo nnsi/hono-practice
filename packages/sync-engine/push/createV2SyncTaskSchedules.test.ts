@@ -34,7 +34,7 @@ describe("V2 task schedule sync wiring", () => {
     ]);
     api.postTaskSchedules.mockResolvedValue(
       okSyncResult({
-        syncedIds: ["s1"],
+        syncedIds: [pendingSchedule.id],
         skippedIds: ["s2"],
         serverWins: [{ id: "s3", recurrenceType: "weekdays", weekdays: [2] }],
       }),
@@ -44,11 +44,9 @@ describe("V2 task schedule sync wiring", () => {
       taskSchedules: [pendingSchedule],
     });
     expect(repos.taskSchedule.markTaskSchedulesSynced).toHaveBeenCalledWith([
-      "s1",
+      { id: pendingSchedule.id, updatedAt: pendingSchedule.updatedAt },
     ]);
-    expect(repos.taskSchedule.markTaskSchedulesFailed).toHaveBeenCalledWith([
-      "s2",
-    ]);
+    expect(repos.taskSchedule.markTaskSchedulesFailed).toHaveBeenCalledWith([]);
     expect(
       repos.taskSchedule.upsertTaskSchedulesFromServer,
     ).toHaveBeenCalledWith(

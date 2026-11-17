@@ -1,14 +1,17 @@
 import type { notes } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertNoteRequest } from "@packages/types";
+import type { SyncedRevision } from "@packages/types/sync/response/syncedRevision";
 
 import type { Tracer } from "../../lib/tracer";
+import { toSyncedRevisions } from "../shared/storedUpdatedAt";
 import type { NoteSyncRepository } from "./noteSyncRepository";
 
 type NoteRow = typeof notes.$inferSelect;
 
 export type SyncResult = {
   syncedIds: string[];
+  syncedRevisions: SyncedRevision[];
   serverWins: NoteRow[];
   skippedIds: string[];
 };
@@ -81,7 +84,7 @@ function syncNotes(repo: NoteSyncRepository, tracer: Tracer) {
     });
 
     if (validNotes.length === 0) {
-      return { syncedIds: [], serverWins: [], skippedIds };
+      return { syncedIds: [], syncedRevisions: [], serverWins: [], skippedIds };
     }
 
     const upserted = await tracer.span("db.upsertNotes", () =>
@@ -90,6 +93,7 @@ function syncNotes(repo: NoteSyncRepository, tracer: Tracer) {
 
     const syncedIdSet = new Set(upserted.map((r) => r.id));
     const syncedIds = [...syncedIdSet];
+    const syncedRevisions = toSyncedRevisions(upserted);
 
     const missedIds = validNotes
       .map((n) => n.id)
@@ -108,6 +112,6 @@ function syncNotes(repo: NoteSyncRepository, tracer: Tracer) {
       }
     }
 
-    return { syncedIds, serverWins, skippedIds };
+    return { syncedIds, syncedRevisions, serverWins, skippedIds };
   };
 }

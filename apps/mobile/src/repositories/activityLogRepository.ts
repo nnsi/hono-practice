@@ -9,6 +9,7 @@ import {
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
 import { str, strOrNull, toSqlBindable, toSyncStatus } from "./sqlRowHelpers";
+import { updateSyncStatusForRevisions } from "./syncStatusSql";
 
 // --- Row mapping helpers (snake_case SQL -> camelCase TS) ---
 
@@ -133,14 +134,9 @@ const adapter: ActivityLogDbAdapter = {
     return rows.map(mapActivityLogRow);
   },
 
-  async updateSyncStatus(ids, status) {
-    if (ids.length === 0) return;
-    const db = await getDatabase();
-    const placeholders = ids.map(() => "?").join(",");
-    await db.runAsync(
-      `UPDATE activity_logs SET sync_status = ? WHERE id IN (${placeholders})`,
-      [status, ...ids],
-    );
+  async updateSyncStatus(revisions, status) {
+    if (revisions.length === 0) return;
+    await updateSyncStatusForRevisions("activity_logs", revisions, status);
     dbEvents.emit("activity_logs");
   },
 

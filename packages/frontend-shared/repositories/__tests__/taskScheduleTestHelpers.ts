@@ -26,10 +26,12 @@ export function setup() {
     getByIds: vi.fn(async (ids) =>
       [...store.values()].filter((row) => ids.includes(row.id)),
     ),
-    updateSyncStatus: vi.fn(async (ids, status) => {
-      for (const id of ids) {
-        const row = store.get(id);
-        if (row) store.set(id, { ...row, _syncStatus: status });
+    updateSyncStatus: vi.fn(async (revisions, status) => {
+      for (const revision of revisions) {
+        const row = store.get(revision.id);
+        if (row && row.updatedAt === revision.updatedAt) {
+          store.set(revision.id, { ...row, _syncStatus: status });
+        }
       }
     }),
     bulkUpsertSynced: vi.fn(async (rows) => {

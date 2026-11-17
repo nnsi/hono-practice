@@ -1,6 +1,11 @@
 import type { SyncRevision } from "@packages/domain/sync/syncableRecord";
 
 import { chunkArray } from "../core/chunkedSync";
+import {
+  type PendingSyncRecord,
+  revisionsForIds,
+  trackSyncResultTimestamps,
+} from "../core/pushResult";
 import type { SyncResult } from "../core/syncResult";
 import { getSyncGeneration } from "../core/syncState";
 import { mapApiActivity, mapApiActivityKind } from "../mappers/apiMappers";
@@ -31,21 +36,7 @@ type SyncActivitiesDeps<T extends SyncRecord, K extends SyncRecord> = {
   }) => void;
 };
 
-type SyncRecord = {
-  id: string;
-  updatedAt: string;
-  _syncStatus: string;
-};
-
-function revisionsForIds<T extends SyncRecord>(
-  records: T[],
-  ids: string[],
-): SyncRevision[] {
-  const idSet = new Set(ids);
-  return records
-    .filter((record) => idSet.has(record.id))
-    .map((record) => ({ id: record.id, updatedAt: record.updatedAt }));
-}
+type SyncRecord = PendingSyncRecord;
 
 export function createSyncActivities<
   T extends SyncRecord,
@@ -72,6 +63,8 @@ export function createSyncActivities<
       );
       const kindsData = kindChunk.map(({ _syncStatus, ...record }) => record);
       const data = await deps.postChunk(activitiesData, kindsData);
+      trackSyncResultTimestamps(data.activities);
+      trackSyncResultTimestamps(data.activityKinds);
 
       if (gen !== getSyncGeneration()) return;
       await deps.markActivitiesSynced(

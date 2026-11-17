@@ -4,6 +4,8 @@ import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertActivityRequest } from "@packages/types";
 import { and, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 
+import { withStoredUpdatedAt } from "../shared/storedUpdatedAt";
+
 type ActivityRow = typeof activities.$inferSelect;
 
 export function getActivitiesByUserId(db: QueryExecutor) {
@@ -83,19 +85,16 @@ export function upsertActivities(db: QueryExecutor) {
       .returning();
 
     const ids = rows.map((r) => r.id);
-    if (ids.length > 0) {
-      await db
-        .update(activities)
-        .set({ updatedAt: sql`NOW()` })
-        .where(
-          and(
-            inArray(activities.id, ids),
-            lt(activities.updatedAt, sql`NOW()`),
-          ),
-        );
-    }
+    if (ids.length === 0) return rows;
+    const bumped = await db
+      .update(activities)
+      .set({ updatedAt: sql`NOW()` })
+      .where(
+        and(inArray(activities.id, ids), lt(activities.updatedAt, sql`NOW()`)),
+      )
+      .returning();
 
-    return rows;
+    return withStoredUpdatedAt(rows, bumped);
   };
 }
 

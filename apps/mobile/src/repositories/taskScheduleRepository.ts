@@ -7,6 +7,7 @@ import {
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
 import { toSqlBindable } from "./sqlRowHelpers";
+import { updateSyncStatusForRevisions } from "./syncStatusSql";
 import {
   mapTaskScheduleRow,
   taskScheduleColumnMap,
@@ -77,13 +78,9 @@ const adapter: TaskScheduleDbAdapter = {
     );
     return mapRows(rows);
   },
-  async updateSyncStatus(ids, status) {
-    if (ids.length === 0) return;
-    const db = await getDatabase();
-    await db.runAsync(
-      `UPDATE task_schedules SET sync_status = ? WHERE id IN (${ids.map(() => "?").join(",")})`,
-      [status, ...ids],
-    );
+  async updateSyncStatus(revisions, status) {
+    if (revisions.length === 0) return;
+    await updateSyncStatusForRevisions("task_schedules", revisions, status);
     dbEvents.emit("task_schedules");
   },
   async bulkUpsertSynced(schedules) {

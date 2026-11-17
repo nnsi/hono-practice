@@ -4,6 +4,8 @@ import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertNoteRequest } from "@packages/types";
 import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 
+import { withStoredUpdatedAt } from "../shared/storedUpdatedAt";
+
 type NoteRow = typeof notes.$inferSelect;
 
 export type NoteSyncRepository = {
@@ -79,14 +81,14 @@ function upsertNotes(db: QueryExecutor) {
 
     // Ensure updatedAt >= NOW() for pull visibility (fixes clock-behind inserts)
     const ids = rows.map((r) => r.id);
-    if (ids.length > 0) {
-      await db
-        .update(notes)
-        .set({ updatedAt: sql`NOW()` })
-        .where(and(inArray(notes.id, ids), lt(notes.updatedAt, sql`NOW()`)));
-    }
+    if (ids.length === 0) return rows;
+    const bumped = await db
+      .update(notes)
+      .set({ updatedAt: sql`NOW()` })
+      .where(and(inArray(notes.id, ids), lt(notes.updatedAt, sql`NOW()`)))
+      .returning();
 
-    return rows;
+    return withStoredUpdatedAt(rows, bumped);
   };
 }
 

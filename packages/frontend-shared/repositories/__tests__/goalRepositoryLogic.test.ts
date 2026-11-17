@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GoalDbAdapter } from "../goalRepositoryLogic";
 import { newGoalRepository } from "../goalRepositoryLogic";
+import { revisionsOf } from "./syncRaceTestHelpers";
 
 let uuidCounter = 0;
 const mockGenerateId = () => `mock-uuid-${++uuidCounter}`;
@@ -34,10 +35,12 @@ function createInMemoryAdapter() {
         .map((id) => store.get(id))
         .filter((g): g is Syncable<GoalRecord> => g !== undefined);
     },
-    async updateSyncStatus(ids, status) {
-      for (const id of ids) {
-        const g = store.get(id);
-        if (g) store.set(id, { ...g, _syncStatus: status });
+    async updateSyncStatus(revisions, status) {
+      for (const revision of revisions) {
+        const current = store.get(revision.id);
+        if (current && current.updatedAt === revision.updatedAt) {
+          store.set(revision.id, { ...current, _syncStatus: status });
+        }
       }
     },
     async bulkUpsertSynced(goals) {
@@ -351,7 +354,7 @@ describe("goalRepositoryLogic", () => {
       adapter.store.set("g1", { ...base, id: "g1", _syncStatus: "pending" });
       adapter.store.set("g2", { ...base, id: "g2", _syncStatus: "pending" });
 
-      await repo.markGoalsSynced(["g1", "g2"]);
+      await repo.markGoalsSynced(revisionsOf(adapter.store, "g1", "g2"));
 
       expect(adapter.store.get("g1")!._syncStatus).toBe("synced");
       expect(adapter.store.get("g2")!._syncStatus).toBe("synced");
@@ -409,7 +412,7 @@ describe("goalRepositoryLogic", () => {
       };
       adapter.store.set("g1", { ...base, id: "g1", _syncStatus: "pending" });
 
-      await repo.markGoalsFailed(["g1"]);
+      await repo.markGoalsFailed(revisionsOf(adapter.store, "g1"));
 
       expect(adapter.store.get("g1")!._syncStatus).toBe("failed");
     });

@@ -15,6 +15,8 @@ import {
   sql,
 } from "drizzle-orm";
 
+import { withStoredUpdatedAt } from "../shared/storedUpdatedAt";
+
 type GoalRow = typeof activityGoals.$inferSelect;
 
 export type GoalSyncRepository = {
@@ -166,19 +168,19 @@ function upsertGoals(db: QueryExecutor) {
       .returning();
 
     const ids = rows.map((r) => r.id);
-    if (ids.length > 0) {
-      await db
-        .update(activityGoals)
-        .set({ updatedAt: sql`NOW()` })
-        .where(
-          and(
-            inArray(activityGoals.id, ids),
-            lt(activityGoals.updatedAt, sql`NOW()`),
-          ),
-        );
-    }
+    if (ids.length === 0) return rows;
+    const bumped = await db
+      .update(activityGoals)
+      .set({ updatedAt: sql`NOW()` })
+      .where(
+        and(
+          inArray(activityGoals.id, ids),
+          lt(activityGoals.updatedAt, sql`NOW()`),
+        ),
+      )
+      .returning();
 
-    return rows;
+    return withStoredUpdatedAt(rows, bumped);
   };
 }
 

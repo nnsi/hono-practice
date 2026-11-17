@@ -1,4 +1,5 @@
 import type {
+  SyncRevision,
   SyncStatus,
   Syncable,
 } from "@packages/domain/sync/syncableRecord";
@@ -9,7 +10,7 @@ import {
 } from "@packages/sync-engine";
 import { v7 as uuidv7 } from "uuid";
 
-import { filterSafeUpserts } from "./syncHelpers";
+import { filterSafeUpserts, markRevisionsSynced } from "./syncHelpers";
 
 type ScheduleData = Omit<
   TaskScheduleRecord,
@@ -32,7 +33,10 @@ export type TaskScheduleDbAdapter = {
     changes: Partial<Syncable<TaskScheduleRecord>>,
   ): Promise<void>;
   getByIds(ids: string[]): Promise<Syncable<TaskScheduleRecord>[]>;
-  updateSyncStatus(ids: string[], status: SyncStatus): Promise<void>;
+  updateSyncStatus(
+    revisions: SyncRevision[],
+    status: SyncStatus,
+  ): Promise<void>;
   bulkUpsertSynced(schedules: Syncable<TaskScheduleRecord>[]): Promise<void>;
 };
 export type TaskScheduleRepository = {
@@ -48,8 +52,8 @@ export type TaskScheduleRepository = {
   /** 未削除のスケジュールすべて（一時停止中を含む）。一覧・管理 UI 用 */
   getAllTaskSchedules(): Promise<Syncable<TaskScheduleRecord>[]>;
   getPendingSyncTaskSchedules(): Promise<Syncable<TaskScheduleRecord>[]>;
-  markTaskSchedulesSynced(ids: string[]): Promise<void>;
-  markTaskSchedulesFailed(ids: string[]): Promise<void>;
+  markTaskSchedulesSynced(revisions: SyncRevision[]): Promise<void>;
+  markTaskSchedulesFailed(revisions: SyncRevision[]): Promise<void>;
   upsertTaskSchedulesFromServer(
     schedules: TaskScheduleRecord[],
     sentSnapshots?: readonly { id: string; updatedAt: string }[],
@@ -125,11 +129,12 @@ export function newTaskScheduleRepository(
           schedule._syncStatus === "failed",
       );
     },
-    async markTaskSchedulesSynced(ids) {
-      if (ids.length > 0) await adapter.updateSyncStatus(ids, "synced");
+    async markTaskSchedulesSynced(revisions) {
+      await markRevisionsSynced(adapter, revisions);
     },
-    async markTaskSchedulesFailed(ids) {
-      if (ids.length > 0) await adapter.updateSyncStatus(ids, "failed");
+    async markTaskSchedulesFailed(revisions) {
+      if (revisions.length > 0)
+        await adapter.updateSyncStatus(revisions, "failed");
     },
     async upsertTaskSchedulesFromServer(schedules, sentSnapshots) {
       if (schedules.length === 0) return;

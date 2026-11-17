@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invalidateSync } from "../core/syncState";
 import { createSyncTasks } from "./createSyncTasks";
 
+const UPDATED_AT = "2025-01-01T00:00:00.000Z";
+const rev = (id: string) => ({ id, updatedAt: UPDATED_AT });
+
 function createMockDeps() {
   return {
     getPendingSyncTasks: vi.fn().mockResolvedValue([]),
@@ -68,7 +71,8 @@ describe("createSyncTasks", () => {
   it("marks synced, failed, and upserts serverWins", async () => {
     const deps = createMockDeps();
     deps.getPendingSyncTasks.mockResolvedValue([
-      { id: "t1", _syncStatus: "pending" },
+      { id: "t1", updatedAt: UPDATED_AT, _syncStatus: "pending" },
+      { id: "t3", updatedAt: UPDATED_AT, _syncStatus: "pending" },
     ]);
 
     const serverWin = {
@@ -96,15 +100,15 @@ describe("createSyncTasks", () => {
     const syncTasks = createSyncTasks(deps);
     await syncTasks();
 
-    expect(deps.markTasksSynced).toHaveBeenCalledWith(["t1"]);
-    expect(deps.markTasksFailed).toHaveBeenCalledWith(["t3"]);
+    expect(deps.markTasksSynced).toHaveBeenCalledWith([rev("t1")]);
+    expect(deps.markTasksFailed).toHaveBeenCalledWith([rev("t3")]);
     expect(deps.upsertTasksFromServer).toHaveBeenCalledTimes(1);
   });
 
   it("throws when postChunk throws", async () => {
     const deps = createMockDeps();
     deps.getPendingSyncTasks.mockResolvedValue([
-      { id: "t1", _syncStatus: "pending" },
+      { id: "t1", updatedAt: UPDATED_AT, _syncStatus: "pending" },
     ]);
     deps.postChunk.mockRejectedValue(new Error("syncTasks failed: 500"));
 
@@ -118,6 +122,7 @@ describe("createSyncTasks", () => {
     const deps = createMockDeps();
     const pending = Array.from({ length: 150 }, (_, i) => ({
       id: `t-${i}`,
+      updatedAt: UPDATED_AT,
       _syncStatus: "pending",
     }));
     deps.getPendingSyncTasks.mockResolvedValue(pending);
@@ -134,6 +139,7 @@ describe("createSyncTasks", () => {
     const deps = createMockDeps();
     const pending = Array.from({ length: 120 }, (_, i) => ({
       id: `t-${i}`,
+      updatedAt: UPDATED_AT,
       title: `Task ${i}`,
       _syncStatus: "pending",
     }));
@@ -163,6 +169,7 @@ describe("createSyncTasks", () => {
     const deps = createMockDeps();
     const pending = Array.from({ length: 150 }, (_, i) => ({
       id: `t-${i}`,
+      updatedAt: UPDATED_AT,
       title: `Task ${i}`,
       _syncStatus: "pending",
     }));
@@ -181,13 +188,13 @@ describe("createSyncTasks", () => {
     await expect(syncTasks()).rejects.toThrow("syncTasks failed");
 
     expect(deps.markTasksSynced).toHaveBeenCalledTimes(1);
-    expect(deps.markTasksSynced).toHaveBeenCalledWith(firstChunkIds);
+    expect(deps.markTasksSynced).toHaveBeenCalledWith(firstChunkIds.map(rev));
   });
 
   it("skips DB writes when sync generation changes (H4)", async () => {
     const deps = createMockDeps();
     deps.getPendingSyncTasks.mockResolvedValue([
-      { id: "t1", _syncStatus: "pending" },
+      { id: "t1", updatedAt: UPDATED_AT, _syncStatus: "pending" },
     ]);
     deps.postChunk.mockImplementation(async () => {
       invalidateSync();

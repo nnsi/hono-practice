@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { SyncedRevisionsSchema } from "./syncedRevision";
+
 const GoalFreezePeriodRowSchema = z.object({
   id: z.string(),
   goalId: z.string(),
@@ -17,6 +19,7 @@ export const GetGoalFreezePeriodsV2ResponseSchema = z.object({
 
 export const SyncGoalFreezePeriodsV2ResponseSchema = z.object({
   syncedIds: z.array(z.string()),
+  syncedRevisions: SyncedRevisionsSchema,
   serverWins: z.array(GoalFreezePeriodRowSchema),
   skippedIds: z.array(z.string()),
 });

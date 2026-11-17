@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GoalFreezePeriodDbAdapter } from "../goalFreezePeriodRepositoryLogic";
 import { newGoalFreezePeriodRepository } from "../goalFreezePeriodRepositoryLogic";
+import { revisionsOf } from "./syncRaceTestHelpers";
 
 let uuidCounter = 0;
 const mockGenerateId = () => `mock-uuid-${++uuidCounter}`;
@@ -41,10 +42,12 @@ function createInMemoryAdapter() {
         .map((id) => store.get(id))
         .filter((p): p is Syncable<GoalFreezePeriodRecord> => p !== undefined);
     },
-    async updateSyncStatus(ids, status) {
-      for (const id of ids) {
-        const p = store.get(id);
-        if (p) store.set(id, { ...p, _syncStatus: status });
+    async updateSyncStatus(revisions, status) {
+      for (const revision of revisions) {
+        const current = store.get(revision.id);
+        if (current && current.updatedAt === revision.updatedAt) {
+          store.set(revision.id, { ...current, _syncStatus: status });
+        }
       }
     },
     async bulkUpsertSynced(periods) {
@@ -238,7 +241,9 @@ describe("goalFreezePeriodRepositoryLogic", () => {
       adapter.store.set("fp1", { ...base, id: "fp1" });
       adapter.store.set("fp2", { ...base, id: "fp2" });
 
-      await repo.markFreezePeriodsSynced(["fp1", "fp2"]);
+      await repo.markFreezePeriodsSynced(
+        revisionsOf(adapter.store, "fp1", "fp2"),
+      );
 
       expect(adapter.store.get("fp1")!._syncStatus).toBe("synced");
       expect(adapter.store.get("fp2")!._syncStatus).toBe("synced");
@@ -279,7 +284,7 @@ describe("goalFreezePeriodRepositoryLogic", () => {
       };
       adapter.store.set("fp1", { ...base, id: "fp1" });
 
-      await repo.markFreezePeriodsFailed(["fp1"]);
+      await repo.markFreezePeriodsFailed(revisionsOf(adapter.store, "fp1"));
 
       expect(adapter.store.get("fp1")!._syncStatus).toBe("failed");
     });

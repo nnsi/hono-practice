@@ -7,6 +7,8 @@ import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertGoalFreezePeriodRequest } from "@packages/types";
 import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 
+import { withStoredUpdatedAt } from "../shared/storedUpdatedAt";
+
 type FreezePeriodRow = typeof activityGoalFreezePeriods.$inferSelect;
 
 export type GoalFreezePeriodSyncRepository = {
@@ -110,19 +112,19 @@ function upsertFreezePeriods(db: QueryExecutor) {
       .returning();
 
     const ids = rows.map((r) => r.id);
-    if (ids.length > 0) {
-      await db
-        .update(activityGoalFreezePeriods)
-        .set({ updatedAt: sql`NOW()` })
-        .where(
-          and(
-            inArray(activityGoalFreezePeriods.id, ids),
-            lt(activityGoalFreezePeriods.updatedAt, sql`NOW()`),
-          ),
-        );
-    }
+    if (ids.length === 0) return rows;
+    const bumped = await db
+      .update(activityGoalFreezePeriods)
+      .set({ updatedAt: sql`NOW()` })
+      .where(
+        and(
+          inArray(activityGoalFreezePeriods.id, ids),
+          lt(activityGoalFreezePeriods.updatedAt, sql`NOW()`),
+        ),
+      )
+      .returning();
 
-    return rows;
+    return withStoredUpdatedAt(rows, bumped);
   };
 }
 

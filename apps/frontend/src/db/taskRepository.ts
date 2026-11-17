@@ -5,6 +5,7 @@ import {
 } from "@packages/frontend-shared/repositories";
 
 import { db } from "./schema";
+import { updateSyncStatusForRevisions } from "./syncStatus";
 
 const adapter: TaskDbAdapter = {
   async getUserId() {
@@ -38,8 +39,8 @@ const adapter: TaskDbAdapter = {
   async getByIds(ids) {
     return db.tasks.where("id").anyOf(ids).toArray();
   },
-  async updateSyncStatus(ids, status) {
-    await db.tasks.where("id").anyOf(ids).modify({ _syncStatus: status });
+  async updateSyncStatus(revisions, status) {
+    await updateSyncStatusForRevisions(db.tasks, revisions, status);
   },
   async bulkUpsertSynced(tasks) {
     await db.tasks.bulkPut(tasks);

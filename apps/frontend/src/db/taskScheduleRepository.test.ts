@@ -78,14 +78,17 @@ describe("Web taskScheduleRepository adapter", () => {
     await repo.getActiveTaskSchedules();
     await repo.getPendingSyncTaskSchedules();
     expect(mockDb.taskSchedules.filter).toHaveBeenCalledTimes(2);
-    await repo.markTaskSchedulesSynced([row.id]);
-    await repo.markTaskSchedulesFailed([row.id]);
-    expect(collection.modify).toHaveBeenNthCalledWith(1, {
-      _syncStatus: "synced",
-    });
-    expect(collection.modify).toHaveBeenNthCalledWith(2, {
-      _syncStatus: "failed",
-    });
+    const stored = { ...row };
+    collection.modify.mockImplementation(
+      async (callback: (value: typeof stored) => void) => callback(stored),
+    );
+    await repo.markTaskSchedulesSynced([row]);
+    expect(stored._syncStatus).toBe("synced");
+    await repo.markTaskSchedulesFailed([row]);
+    expect(stored._syncStatus).toBe("failed");
+    // 送信した版から変わった行は状態を変えない
+    await repo.markTaskSchedulesSynced([{ id: row.id, updatedAt: "stale" }]);
+    expect(stored._syncStatus).toBe("failed");
     await repo.upsertTaskSchedulesFromServer([row]);
     expect(mockDb.taskSchedules.bulkPut).toHaveBeenCalledWith([
       { ...row, _syncStatus: "synced" },

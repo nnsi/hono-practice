@@ -15,11 +15,22 @@ describe("task schedule sync", () => {
     const schedule = makeSchedule();
     const res = await syncRequest({ taskSchedules: [schedule] });
     expect(res.status).toBe(200);
+    const [stored] = await testDB
+      .select()
+      .from(taskSchedules)
+      .where(eq(taskSchedules.id, schedule.id));
     expect(await res.json()).toEqual({
       syncedIds: [schedule.id],
+      // 受理した行は、サーバーが繰り上げて保存した updatedAt と一緒に返す
+      syncedRevisions: [
+        { id: schedule.id, updatedAt: stored.updatedAt.toISOString() },
+      ],
       serverWins: [],
       skippedIds: [],
     });
+    expect(stored.updatedAt.getTime()).toBeGreaterThanOrEqual(
+      Date.parse(schedule.updatedAt),
+    );
     const [task] = await testDB
       .insert(tasks)
       .values({
@@ -102,6 +113,7 @@ describe("task schedule sync", () => {
   test("empty batch and malformed payloads", async () => {
     expect(await (await syncRequest({ taskSchedules: [] })).json()).toEqual({
       syncedIds: [],
+      syncedRevisions: [],
       serverWins: [],
       skippedIds: [],
     });

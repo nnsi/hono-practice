@@ -42,6 +42,23 @@ export function trackServerTimeFromResponse(
   trackServerTimeHeader(response?.headers?.get("date"));
 }
 
+/**
+ * サーバーが保存した updatedAt を観測したら、以後に発行する時刻を必ずそれより後にする。
+ *
+ * サーバーは push を受理すると updatedAt を自分の時刻へ繰り上げる。Date ヘッダーは
+ * 秒精度で、端末時計もずれうるため、推定サーバー時刻だけでは同じ行の次の編集に
+ * 保存済みより古い時刻を付けてしまい、サーバーに「古い更新」として捨てられる。
+ */
+export function trackServerTimestamps(
+  timestamps: Iterable<string | null | undefined>,
+): void {
+  for (const timestamp of timestamps) {
+    if (!timestamp) continue;
+    const timeMs = Date.parse(timestamp);
+    if (!Number.isNaN(timeMs)) updateLogicalServerTime(timeMs);
+  }
+}
+
 export function getServerNowISOString(): string {
   const estimatedServerNowMs = hasServerOffset
     ? Date.now() + serverOffsetMs

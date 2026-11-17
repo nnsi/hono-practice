@@ -35,6 +35,73 @@ describe("createSyncEngine", () => {
     vi.useRealTimers();
   });
 
+  describe("同じ同期関数の直列化", () => {
+    function deferred() {
+      let resolve!: () => void;
+      const promise = new Promise<void>((r) => {
+        resolve = r;
+      });
+      return { promise, resolve };
+    }
+
+    it("実行中に呼ばれたら並行して走らせず、完了後に 1 回だけ再実行する", async () => {
+      const fns = createMockFns();
+      const runs = [deferred(), deferred()];
+      let started = 0;
+      fns.syncTasks.mockImplementation(() => runs[started++].promise);
+      const engine = createSyncEngine(fns, createMockNetwork());
+
+      const first = engine.syncTasks();
+      const second = engine.syncTasks();
+      const third = engine.syncTasks();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(started).toBe(1);
+
+      runs[0].resolve();
+      await vi.advanceTimersByTimeAsync(0);
+      // 実行中に入った編集を拾うための再実行（2 回呼ばれても 1 回）
+      expect(started).toBe(2);
+
+      runs[1].resolve();
+      await Promise.all([first, second, third]);
+      expect(fns.syncTasks).toHaveBeenCalledTimes(2);
+    });
+
+    it("syncAll 実行中の個別呼び出しも同じ関数とは並行しない", async () => {
+      const fns = createMockFns();
+      const runs = [deferred(), deferred()];
+      let started = 0;
+      fns.syncTasks.mockImplementation(() => runs[started++].promise);
+      const engine = createSyncEngine(fns, createMockNetwork());
+
+      const all = engine.syncAll();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(started).toBe(1);
+
+      const direct = engine.syncTasks();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(started).toBe(1);
+
+      runs[0].resolve();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(started).toBe(2);
+      runs[1].resolve();
+      await Promise.all([all, direct]);
+    });
+
+    it("失敗した後の呼び出しは新しく実行される", async () => {
+      const fns = createMockFns();
+      fns.syncTasks
+        .mockRejectedValueOnce(new Error("offline"))
+        .mockResolvedValueOnce(undefined);
+      const engine = createSyncEngine(fns, createMockNetwork());
+
+      await expect(engine.syncTasks()).rejects.toThrow("offline");
+      await expect(engine.syncTasks()).resolves.toBeUndefined();
+      expect(fns.syncTasks).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe("syncAll", () => {
     it("calls sync functions in correct order", async () => {
       const fns = createMockFns();
