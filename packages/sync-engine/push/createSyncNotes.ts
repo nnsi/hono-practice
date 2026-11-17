@@ -1,19 +1,26 @@
+import type { SyncRevision } from "@packages/domain/sync/syncableRecord";
+
 import { chunkArray } from "../core/chunkedSync";
+import {
+  type PendingSyncRecord,
+  revisionsForIds,
+  trackSyncResultTimestamps,
+} from "../core/pushResult";
 import type { SyncResult } from "../core/syncResult";
 import { getSyncGeneration } from "../core/syncState";
 import { mapApiNote } from "../mappers/apiMappers";
 
-type SyncNotesDeps<T extends { _syncStatus: string }> = {
+type SyncNotesDeps<T extends PendingSyncRecord> = {
   getPendingSyncNotes: () => Promise<T[]>;
   postChunk: (chunk: Omit<T, "_syncStatus">[]) => Promise<SyncResult>;
-  markNotesSynced: (ids: string[]) => Promise<void>;
-  markNotesFailed: (ids: string[]) => Promise<void>;
+  markNotesSynced: (revisions: SyncRevision[]) => Promise<void>;
+  markNotesFailed: (revisions: SyncRevision[]) => Promise<void>;
   upsertNotesFromServer: (
     wins: ReturnType<typeof mapApiNote>[],
   ) => Promise<void>;
 };
 
-export function createSyncNotes<T extends { _syncStatus: string }>(
+export function createSyncNotes<T extends PendingSyncRecord>(
   deps: SyncNotesDeps<T>,
 ) {
   return async function syncNotes(): Promise<void> {
@@ -27,11 +34,12 @@ export function createSyncNotes<T extends { _syncStatus: string }>(
     for (const chunk of chunks) {
       if (gen !== getSyncGeneration()) return;
       const data = await deps.postChunk(chunk);
+      trackSyncResultTimestamps(data);
 
       if (gen !== getSyncGeneration()) return;
-      await deps.markNotesSynced(data.syncedIds);
+      await deps.markNotesSynced(revisionsForIds(pending, data.syncedIds));
       if (gen !== getSyncGeneration()) return;
-      await deps.markNotesFailed(data.skippedIds);
+      await deps.markNotesFailed(revisionsForIds(pending, data.skippedIds));
       if (gen !== getSyncGeneration()) return;
       if (data.serverWins.length > 0) {
         await deps.upsertNotesFromServer(data.serverWins.map(mapApiNote));

@@ -111,6 +111,17 @@ describe("POST /users/v2/notes/sync", () => {
 
     const json = await res.json();
     expect(json.syncedIds).toContain(note.id);
+    // 受理した行は、サーバーが繰り上げて保存した updatedAt と一緒に返す
+    const pulled = await (await getNotes(app)).json();
+    const stored = pulled.notes.find(
+      (row: { id: string }) => row.id === note.id,
+    );
+    expect(json.syncedRevisions).toEqual([
+      { id: note.id, updatedAt: stored.updatedAt },
+    ]);
+    expect(Date.parse(stored.updatedAt)).toBeGreaterThanOrEqual(
+      Date.parse(note.updatedAt),
+    );
     expect(json.serverWins).toHaveLength(0);
     expect(json.skippedIds).toHaveLength(0);
   });

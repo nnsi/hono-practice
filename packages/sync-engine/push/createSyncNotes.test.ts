@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invalidateSync } from "../core/syncState";
 import { createSyncNotes } from "./createSyncNotes";
 
+const UPDATED_AT = "2025-01-01T00:00:00.000Z";
+const rev = (id: string) => ({ id, updatedAt: UPDATED_AT });
+
 function createMockDeps() {
   return {
     getPendingSyncNotes: vi.fn().mockResolvedValue([]),
@@ -66,7 +69,8 @@ describe("createSyncNotes", () => {
   it("marks synced and failed ids", async () => {
     const deps = createMockDeps();
     deps.getPendingSyncNotes.mockResolvedValue([
-      { id: "n1", _syncStatus: "pending" },
+      { id: "n1", updatedAt: UPDATED_AT, _syncStatus: "pending" },
+      { id: "n3", updatedAt: UPDATED_AT, _syncStatus: "pending" },
     ]);
 
     const serverWin = {
@@ -88,15 +92,15 @@ describe("createSyncNotes", () => {
     const syncNotes = createSyncNotes(deps);
     await syncNotes();
 
-    expect(deps.markNotesSynced).toHaveBeenCalledWith(["n1"]);
-    expect(deps.markNotesFailed).toHaveBeenCalledWith(["n3"]);
+    expect(deps.markNotesSynced).toHaveBeenCalledWith([rev("n1")]);
+    expect(deps.markNotesFailed).toHaveBeenCalledWith([rev("n3")]);
     expect(deps.upsertNotesFromServer).toHaveBeenCalledTimes(1);
   });
 
   it("throws when postChunk throws", async () => {
     const deps = createMockDeps();
     deps.getPendingSyncNotes.mockResolvedValue([
-      { id: "n1", _syncStatus: "pending" },
+      { id: "n1", updatedAt: UPDATED_AT, _syncStatus: "pending" },
     ]);
     deps.postChunk.mockRejectedValue(new Error("syncNotes failed: 500"));
 
@@ -110,6 +114,7 @@ describe("createSyncNotes", () => {
     const deps = createMockDeps();
     const pending = Array.from({ length: 150 }, (_, i) => ({
       id: `n-${i}`,
+      updatedAt: UPDATED_AT,
       _syncStatus: "pending",
     }));
     deps.getPendingSyncNotes.mockResolvedValue(pending);
@@ -126,6 +131,7 @@ describe("createSyncNotes", () => {
     const deps = createMockDeps();
     const pending = Array.from({ length: 120 }, (_, i) => ({
       id: `n-${i}`,
+      updatedAt: UPDATED_AT,
       title: `Note ${i}`,
       _syncStatus: "pending",
     }));
@@ -155,6 +161,7 @@ describe("createSyncNotes", () => {
     const deps = createMockDeps();
     const pending = Array.from({ length: 150 }, (_, i) => ({
       id: `n-${i}`,
+      updatedAt: UPDATED_AT,
       title: `Note ${i}`,
       _syncStatus: "pending",
     }));
@@ -173,13 +180,13 @@ describe("createSyncNotes", () => {
     await expect(syncNotes()).rejects.toThrow("syncNotes failed");
 
     expect(deps.markNotesSynced).toHaveBeenCalledTimes(1);
-    expect(deps.markNotesSynced).toHaveBeenCalledWith(firstChunkIds);
+    expect(deps.markNotesSynced).toHaveBeenCalledWith(firstChunkIds.map(rev));
   });
 
   it("skips DB writes when sync generation changes", async () => {
     const deps = createMockDeps();
     deps.getPendingSyncNotes.mockResolvedValue([
-      { id: "n1", _syncStatus: "pending" },
+      { id: "n1", updatedAt: UPDATED_AT, _syncStatus: "pending" },
     ]);
     deps.postChunk.mockImplementation(async () => {
       invalidateSync();

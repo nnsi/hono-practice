@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { TaskDbAdapter } from "../taskRepositoryLogic";
 import { newTaskRepository } from "../taskRepositoryLogic";
+import { revisionsOf } from "./syncRaceTestHelpers";
 
 const uuidState = { counter: 0 };
 const mockGenerateId = () => `mock-uuid-${++uuidState.counter}`;
@@ -34,10 +35,12 @@ function createInMemoryAdapter() {
         .map((id) => store.get(id))
         .filter((t): t is Syncable<TaskRecord> => t !== undefined);
     },
-    async updateSyncStatus(ids, status) {
-      for (const id of ids) {
-        const t = store.get(id);
-        if (t) store.set(id, { ...t, _syncStatus: status });
+    async updateSyncStatus(revisions, status) {
+      for (const revision of revisions) {
+        const current = store.get(revision.id);
+        if (current && current.updatedAt === revision.updatedAt) {
+          store.set(revision.id, { ...current, _syncStatus: status });
+        }
       }
     },
     async bulkUpsertSynced(tasks) {
@@ -422,7 +425,7 @@ describe("taskRepositoryLogic", () => {
       store.set("t1", createTask({ id: "t1", _syncStatus: "pending" }));
       store.set("t2", createTask({ id: "t2", _syncStatus: "pending" }));
 
-      await repo.markTasksSynced(["t1", "t2"]);
+      await repo.markTasksSynced(revisionsOf(store, "t1", "t2"));
 
       expect(store.get("t1")!._syncStatus).toBe("synced");
       expect(store.get("t2")!._syncStatus).toBe("synced");
@@ -442,7 +445,7 @@ describe("taskRepositoryLogic", () => {
     it("指定IDのTasksをfailed状態にする", async () => {
       store.set("t1", createTask({ id: "t1", _syncStatus: "pending" }));
 
-      await repo.markTasksFailed(["t1"]);
+      await repo.markTasksFailed(revisionsOf(store, "t1"));
 
       expect(store.get("t1")!._syncStatus).toBe("failed");
     });

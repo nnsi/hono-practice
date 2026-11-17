@@ -47,6 +47,8 @@ import {
   newTaskRepository,
 } from "@packages/frontend-shared/repositories";
 
+import { updateSyncStatusForRevisions } from "./syncStatus";
+
 const uuidState = { counter: 0 };
 const mockGenerateId = () => `mock-uuid-${++uuidState.counter}`;
 
@@ -70,8 +72,14 @@ const adapter: TaskDbAdapter = {
   async getByIds(ids) {
     return mockDb.tasks.where("id").anyOf(ids).toArray();
   },
-  async updateSyncStatus(ids, status) {
-    await mockDb.tasks.where("id").anyOf(ids).modify({ _syncStatus: status });
+  async updateSyncStatus(revisions, status) {
+    await updateSyncStatusForRevisions(
+      mockDb.tasks as unknown as Parameters<
+        typeof updateSyncStatusForRevisions
+      >[0],
+      revisions,
+      status,
+    );
   },
   async bulkUpsertSynced(tasks) {
     await mockDb.tasks.bulkPut(tasks);
@@ -324,15 +332,48 @@ describe("taskRepository", () => {
 
   describe("markTasksSynced", () => {
     it("指定IDのTasksをsynced状態にする", async () => {
-      const mockModify = vi.fn().mockResolvedValue(undefined);
-      const mockAnyOf = vi.fn().mockReturnValue({ modify: mockModify });
+      const records = [
+        {
+          id: "t1",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          _syncStatus: "pending",
+        },
+        {
+          id: "t2",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          _syncStatus: "pending",
+        },
+        {
+          id: "edited",
+          updatedAt: "2026-01-01T00:00:01.000Z",
+          _syncStatus: "pending",
+        },
+      ];
+      const mockModify = vi.fn(
+        async (callback: (value: (typeof records)[number]) => void) => {
+          for (const record of records) callback(record);
+        },
+      );
+      const mockAnyOf = vi.fn().mockReturnValue({
+        modify: mockModify,
+        toArray: vi.fn().mockResolvedValue([]),
+      });
       mockDb.tasks.where.mockReturnValue({ anyOf: mockAnyOf });
 
-      await taskRepository.markTasksSynced(["t1", "t2"]);
+      await taskRepository.markTasksSynced([
+        { id: "t1", updatedAt: "2026-01-01T00:00:00.000Z" },
+        { id: "t2", updatedAt: "2026-01-01T00:00:00.000Z" },
+        { id: "edited", updatedAt: "2026-01-01T00:00:00.000Z" },
+      ]);
 
       expect(mockDb.tasks.where).toHaveBeenCalledWith("id");
-      expect(mockAnyOf).toHaveBeenCalledWith(["t1", "t2"]);
-      expect(mockModify).toHaveBeenCalledWith({ _syncStatus: "synced" });
+      expect(mockAnyOf).toHaveBeenCalledWith(["t1", "t2", "edited"]);
+      // 送信した版から変わっていない行だけ状態が変わる
+      expect(records.map((record) => record._syncStatus)).toEqual([
+        "synced",
+        "synced",
+        "pending",
+      ]);
     });
 
     it("空配列の場合は何もしない", async () => {
@@ -343,15 +384,41 @@ describe("taskRepository", () => {
 
   describe("markTasksFailed", () => {
     it("指定IDのTasksをfailed状態にする", async () => {
-      const mockModify = vi.fn().mockResolvedValue(undefined);
-      const mockAnyOf = vi.fn().mockReturnValue({ modify: mockModify });
+      const records = [
+        {
+          id: "t1",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          _syncStatus: "pending",
+        },
+        {
+          id: "edited",
+          updatedAt: "2026-01-01T00:00:01.000Z",
+          _syncStatus: "pending",
+        },
+      ];
+      const mockModify = vi.fn(
+        async (callback: (value: (typeof records)[number]) => void) => {
+          for (const record of records) callback(record);
+        },
+      );
+      const mockAnyOf = vi.fn().mockReturnValue({
+        modify: mockModify,
+        toArray: vi.fn().mockResolvedValue([]),
+      });
       mockDb.tasks.where.mockReturnValue({ anyOf: mockAnyOf });
 
-      await taskRepository.markTasksFailed(["t1"]);
+      await taskRepository.markTasksFailed([
+        { id: "t1", updatedAt: "2026-01-01T00:00:00.000Z" },
+        { id: "edited", updatedAt: "2026-01-01T00:00:00.000Z" },
+      ]);
 
       expect(mockDb.tasks.where).toHaveBeenCalledWith("id");
-      expect(mockAnyOf).toHaveBeenCalledWith(["t1"]);
-      expect(mockModify).toHaveBeenCalledWith({ _syncStatus: "failed" });
+      expect(mockAnyOf).toHaveBeenCalledWith(["t1", "edited"]);
+      // 送信した版から変わっていない行だけ状態が変わる
+      expect(records.map((record) => record._syncStatus)).toEqual([
+        "failed",
+        "pending",
+      ]);
     });
 
     it("空配列の場合は何もしない", async () => {

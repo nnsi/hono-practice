@@ -8,6 +8,7 @@ import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
 import { type SqlRow, goalColumnMap, mapGoalRow } from "./goalRowMappers";
 import { toSqlBindable } from "./sqlRowHelpers";
+import { updateSyncStatusForRevisions } from "./syncStatusSql";
 
 export { mapGoalRow } from "./goalRowMappers";
 
@@ -79,13 +80,9 @@ const adapter: GoalDbAdapter = {
     );
     return rows.map(mapGoalRow);
   },
-  async updateSyncStatus(ids, status) {
-    const db = await getDatabase();
-    const ph = ids.map(() => "?").join(",");
-    await db.runAsync(`UPDATE goals SET sync_status = ? WHERE id IN (${ph})`, [
-      status,
-      ...ids,
-    ]);
+  async updateSyncStatus(revisions, status) {
+    if (revisions.length === 0) return;
+    await updateSyncStatusForRevisions("goals", revisions, status);
     dbEvents.emit("goals");
   },
   async bulkUpsertSynced(goals) {

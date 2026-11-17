@@ -1,11 +1,17 @@
+import type { SyncRevision } from "@packages/domain/sync/syncableRecord";
+
 import { chunkArray } from "../core/chunkedSync";
+import {
+  type PendingSyncRecord,
+  revisionsForIds,
+  trackSyncResultTimestamps,
+} from "../core/pushResult";
 import type { SyncResult } from "../core/syncResult";
 import { getSyncGeneration } from "../core/syncState";
 import { mapApiGoal } from "../mappers/apiMappers";
 
 type SyncGoalsDeps<
-  T extends {
-    _syncStatus: string;
+  T extends PendingSyncRecord & {
     currentBalance: unknown;
     totalTarget: unknown;
     totalActual: unknown;
@@ -18,16 +24,15 @@ type SyncGoalsDeps<
       "_syncStatus" | "currentBalance" | "totalTarget" | "totalActual"
     >[],
   ) => Promise<SyncResult>;
-  markGoalsSynced: (ids: string[]) => Promise<void>;
-  markGoalsFailed: (ids: string[]) => Promise<void>;
+  markGoalsSynced: (revisions: SyncRevision[]) => Promise<void>;
+  markGoalsFailed: (revisions: SyncRevision[]) => Promise<void>;
   upsertGoalsFromServer: (
     wins: ReturnType<typeof mapApiGoal>[],
   ) => Promise<void>;
 };
 
 export function createSyncGoals<
-  T extends {
-    _syncStatus: string;
+  T extends PendingSyncRecord & {
     currentBalance: unknown;
     totalTarget: unknown;
     totalActual: unknown;
@@ -46,11 +51,12 @@ export function createSyncGoals<
     for (const chunk of chunks) {
       if (gen !== getSyncGeneration()) return;
       const data = await deps.postChunk(chunk);
+      trackSyncResultTimestamps(data);
 
       if (gen !== getSyncGeneration()) return;
-      await deps.markGoalsSynced(data.syncedIds);
+      await deps.markGoalsSynced(revisionsForIds(pending, data.syncedIds));
       if (gen !== getSyncGeneration()) return;
-      await deps.markGoalsFailed(data.skippedIds);
+      await deps.markGoalsFailed(revisionsForIds(pending, data.skippedIds));
       if (gen !== getSyncGeneration()) return;
       if (data.serverWins.length > 0) {
         await deps.upsertGoalsFromServer(data.serverWins.map(mapApiGoal));

@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invalidateSync } from "../core/syncState";
 import { createSyncGoalFreezePeriods } from "./createSyncGoalFreezePeriods";
 
+const UPDATED_AT = "2025-01-01T00:00:00.000Z";
+const rev = (id: string) => ({ id, updatedAt: UPDATED_AT });
+
 function createMockDeps() {
   return {
     getPendingSyncFreezePeriods: vi.fn().mockResolvedValue([]),
@@ -66,7 +69,8 @@ describe("createSyncGoalFreezePeriods", () => {
   it("marks synced and failed ids", async () => {
     const deps = createMockDeps();
     deps.getPendingSyncFreezePeriods.mockResolvedValue([
-      { id: "fp1", _syncStatus: "pending" },
+      { id: "fp1", updatedAt: UPDATED_AT, _syncStatus: "pending" },
+      { id: "fp3", updatedAt: UPDATED_AT, _syncStatus: "pending" },
     ]);
 
     const serverWin = {
@@ -88,15 +92,15 @@ describe("createSyncGoalFreezePeriods", () => {
     const syncFreezePeriods = createSyncGoalFreezePeriods(deps);
     await syncFreezePeriods();
 
-    expect(deps.markFreezePeriodsSynced).toHaveBeenCalledWith(["fp1"]);
-    expect(deps.markFreezePeriodsFailed).toHaveBeenCalledWith(["fp3"]);
+    expect(deps.markFreezePeriodsSynced).toHaveBeenCalledWith([rev("fp1")]);
+    expect(deps.markFreezePeriodsFailed).toHaveBeenCalledWith([rev("fp3")]);
     expect(deps.upsertFreezePeriodsFromServer).toHaveBeenCalledTimes(1);
   });
 
   it("throws when postChunk throws", async () => {
     const deps = createMockDeps();
     deps.getPendingSyncFreezePeriods.mockResolvedValue([
-      { id: "fp1", _syncStatus: "pending" },
+      { id: "fp1", updatedAt: UPDATED_AT, _syncStatus: "pending" },
     ]);
     deps.postChunk.mockRejectedValue(
       new Error("syncFreezePeriods failed: 500"),
@@ -114,6 +118,7 @@ describe("createSyncGoalFreezePeriods", () => {
     const deps = createMockDeps();
     const pending = Array.from({ length: 150 }, (_, i) => ({
       id: `fp-${i}`,
+      updatedAt: UPDATED_AT,
       _syncStatus: "pending",
     }));
     deps.getPendingSyncFreezePeriods.mockResolvedValue(pending);
@@ -130,6 +135,7 @@ describe("createSyncGoalFreezePeriods", () => {
     const deps = createMockDeps();
     const pending = Array.from({ length: 120 }, (_, i) => ({
       id: `fp-${i}`,
+      updatedAt: UPDATED_AT,
       startDate: "2026-01-01",
       _syncStatus: "pending",
     }));
@@ -159,6 +165,7 @@ describe("createSyncGoalFreezePeriods", () => {
     const deps = createMockDeps();
     const pending = Array.from({ length: 150 }, (_, i) => ({
       id: `fp-${i}`,
+      updatedAt: UPDATED_AT,
       startDate: "2026-01-01",
       _syncStatus: "pending",
     }));
@@ -179,13 +186,15 @@ describe("createSyncGoalFreezePeriods", () => {
     );
 
     expect(deps.markFreezePeriodsSynced).toHaveBeenCalledTimes(1);
-    expect(deps.markFreezePeriodsSynced).toHaveBeenCalledWith(firstChunkIds);
+    expect(deps.markFreezePeriodsSynced).toHaveBeenCalledWith(
+      firstChunkIds.map(rev),
+    );
   });
 
   it("skips DB writes when sync generation changes", async () => {
     const deps = createMockDeps();
     deps.getPendingSyncFreezePeriods.mockResolvedValue([
-      { id: "fp1", _syncStatus: "pending" },
+      { id: "fp1", updatedAt: UPDATED_AT, _syncStatus: "pending" },
     ]);
     deps.postChunk.mockImplementation(async () => {
       invalidateSync();

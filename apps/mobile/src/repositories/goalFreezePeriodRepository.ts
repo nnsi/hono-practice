@@ -8,6 +8,7 @@ import {
 import { getDatabase } from "../db/database";
 import { dbEvents } from "../db/dbEvents";
 import { str, strOrNull, toSqlBindable, toSyncStatus } from "./sqlRowHelpers";
+import { updateSyncStatusForRevisions } from "./syncStatusSql";
 
 // --- Row mapping helpers (snake_case SQL -> camelCase TS) ---
 
@@ -114,12 +115,12 @@ const adapter: GoalFreezePeriodDbAdapter = {
     );
     return rows.map(mapFreezePeriodRow);
   },
-  async updateSyncStatus(ids, status) {
-    const db = await getDatabase();
-    const ph = ids.map(() => "?").join(",");
-    await db.runAsync(
-      `UPDATE goal_freeze_periods SET sync_status = ? WHERE id IN (${ph})`,
-      [status, ...ids],
+  async updateSyncStatus(revisions, status) {
+    if (revisions.length === 0) return;
+    await updateSyncStatusForRevisions(
+      "goal_freeze_periods",
+      revisions,
+      status,
     );
     dbEvents.emit("goal_freeze_periods");
   },

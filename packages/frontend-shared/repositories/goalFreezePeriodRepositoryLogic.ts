@@ -1,12 +1,13 @@
 import type { GoalFreezePeriodRecord } from "@packages/domain/goal/goalFreezePeriod";
 import type {
+  SyncRevision,
   SyncStatus,
   Syncable,
 } from "@packages/domain/sync/syncableRecord";
 import { getServerNowISOString } from "@packages/sync-engine";
 import { v7 as uuidv7 } from "uuid";
 
-import { filterSafeUpserts } from "./syncHelpers";
+import { filterSafeUpserts, markRevisionsSynced } from "./syncHelpers";
 
 type CreateFreezePeriodInput = {
   goalId: string;
@@ -30,7 +31,10 @@ export type GoalFreezePeriodDbAdapter = {
     changes: Partial<Syncable<GoalFreezePeriodRecord>>,
   ): Promise<void>;
   getByIds(ids: string[]): Promise<Syncable<GoalFreezePeriodRecord>[]>;
-  updateSyncStatus(ids: string[], status: SyncStatus): Promise<void>;
+  updateSyncStatus(
+    revisions: SyncRevision[],
+    status: SyncStatus,
+  ): Promise<void>;
   bulkUpsertSynced(periods: Syncable<GoalFreezePeriodRecord>[]): Promise<void>;
 };
 
@@ -47,8 +51,8 @@ export type GoalFreezePeriodRepository = {
   ): Promise<void>;
   softDeleteGoalFreezePeriod(id: string): Promise<void>;
   getPendingSyncFreezePeriods(): Promise<Syncable<GoalFreezePeriodRecord>[]>;
-  markFreezePeriodsSynced(ids: string[]): Promise<void>;
-  markFreezePeriodsFailed(ids: string[]): Promise<void>;
+  markFreezePeriodsSynced(revisions: SyncRevision[]): Promise<void>;
+  markFreezePeriodsFailed(revisions: SyncRevision[]): Promise<void>;
   upsertFreezePeriodsFromServer(
     periods: GoalFreezePeriodRecord[],
   ): Promise<void>;
@@ -105,14 +109,13 @@ export function newGoalFreezePeriodRepository(
       );
     },
 
-    async markFreezePeriodsSynced(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateSyncStatus(ids, "synced");
+    async markFreezePeriodsSynced(revisions: SyncRevision[]) {
+      await markRevisionsSynced(adapter, revisions);
     },
 
-    async markFreezePeriodsFailed(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateSyncStatus(ids, "failed");
+    async markFreezePeriodsFailed(revisions: SyncRevision[]) {
+      if (revisions.length === 0) return;
+      await adapter.updateSyncStatus(revisions, "failed");
     },
 
     async upsertFreezePeriodsFromServer(periods: GoalFreezePeriodRecord[]) {

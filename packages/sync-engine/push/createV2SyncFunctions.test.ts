@@ -104,7 +104,18 @@ describe("createV2SyncFunctions", () => {
     const api = createMockApi();
     const repos = createMockRepos();
     repos.activityLog.getPendingSyncActivityLogs.mockResolvedValue([
-      { id: "l1", quantity: 5, _syncStatus: "pending" },
+      {
+        id: "l1",
+        updatedAt: "2025-01-01T00:00:00.000Z",
+        quantity: 5,
+        _syncStatus: "pending",
+      },
+      {
+        id: "l2",
+        updatedAt: "2025-01-01T00:00:00.000Z",
+        quantity: 1,
+        _syncStatus: "pending",
+      },
     ]);
     api.postActivityLogs.mockResolvedValue(
       okSyncResult({ syncedIds: ["l1"], skippedIds: ["l2"] }),
@@ -114,13 +125,16 @@ describe("createV2SyncFunctions", () => {
     await fns.syncActivityLogs();
 
     expect(api.postActivityLogs).toHaveBeenCalledWith({
-      logs: [{ id: "l1", quantity: 5 }],
+      logs: [
+        { id: "l1", updatedAt: "2025-01-01T00:00:00.000Z", quantity: 5 },
+        { id: "l2", updatedAt: "2025-01-01T00:00:00.000Z", quantity: 1 },
+      ],
     });
     expect(repos.activityLog.markActivityLogsSynced).toHaveBeenCalledWith([
-      "l1",
+      { id: "l1", updatedAt: "2025-01-01T00:00:00.000Z" },
     ]);
     expect(repos.activityLog.markActivityLogsFailed).toHaveBeenCalledWith([
-      "l2",
+      { id: "l2", updatedAt: "2025-01-01T00:00:00.000Z" },
     ]);
   });
 
@@ -158,7 +172,9 @@ describe("createV2SyncFunctions", () => {
     expect(sent).not.toHaveProperty("currentBalance");
     expect(sent).not.toHaveProperty("totalTarget");
     expect(sent).not.toHaveProperty("totalActual");
-    expect(repos.goal.markGoalsSynced).toHaveBeenCalledWith([pendingGoal.id]);
+    expect(repos.goal.markGoalsSynced).toHaveBeenCalledWith([
+      { id: pendingGoal.id, updatedAt: pendingGoal.updatedAt },
+    ]);
   });
 
   it("rejects invalid goal payloads before hitting the network", async () => {
@@ -207,7 +223,12 @@ describe("createV2SyncFunctions", () => {
     const api = createMockApi();
     const repos = createMockRepos();
     repos.goalFreezePeriod.getPendingSyncFreezePeriods.mockResolvedValue([
-      { id: "f1", goalId: "g1", _syncStatus: "pending" },
+      {
+        id: "f1",
+        updatedAt: "2025-01-01T00:00:00.000Z",
+        goalId: "g1",
+        _syncStatus: "pending",
+      },
     ]);
     api.postGoalFreezePeriods.mockResolvedValue(
       okSyncResult({ syncedIds: ["f1"] }),
@@ -217,10 +238,12 @@ describe("createV2SyncFunctions", () => {
     await fns.syncGoalFreezePeriods();
 
     expect(api.postGoalFreezePeriods).toHaveBeenCalledWith({
-      freezePeriods: [{ id: "f1", goalId: "g1" }],
+      freezePeriods: [
+        { id: "f1", updatedAt: "2025-01-01T00:00:00.000Z", goalId: "g1" },
+      ],
     });
     expect(repos.goalFreezePeriod.markFreezePeriodsSynced).toHaveBeenCalledWith(
-      ["f1"],
+      [{ id: "f1", updatedAt: "2025-01-01T00:00:00.000Z" }],
     );
   });
 });

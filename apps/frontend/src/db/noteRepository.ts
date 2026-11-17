@@ -4,6 +4,7 @@ import {
 } from "@packages/frontend-shared/repositories";
 
 import { db } from "./schema";
+import { updateSyncStatusForRevisions } from "./syncStatus";
 
 const adapter: NoteDbAdapter = {
   async getUserId() {
@@ -29,8 +30,8 @@ const adapter: NoteDbAdapter = {
   async getByIds(ids) {
     return db.notes.where("id").anyOf(ids).toArray();
   },
-  async updateSyncStatus(ids, status) {
-    await db.notes.where("id").anyOf(ids).modify({ _syncStatus: status });
+  async updateSyncStatus(revisions, status) {
+    await updateSyncStatusForRevisions(db.notes, revisions, status);
   },
   async bulkUpsertSynced(records) {
     await db.notes.bulkPut(records);

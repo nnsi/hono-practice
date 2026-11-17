@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vitest";
 
-import { createApp, makeGoal, postSync } from "./goalSyncRouteTestHelper";
+import {
+  createApp,
+  getGoals,
+  makeGoal,
+  postSync,
+} from "./goalSyncRouteTestHelper";
 
 describe("POST /users/v2/goals/sync", () => {
   test("新規ゴールの同期", async () => {
@@ -12,6 +17,17 @@ describe("POST /users/v2/goals/sync", () => {
 
     const json = await res.json();
     expect(json.syncedIds).toContain(newGoal.id);
+    // 受理した行は、サーバーが繰り上げて保存した updatedAt と一緒に返す
+    const pulled = await (await getGoals(app)).json();
+    const stored = pulled.goals.find(
+      (row: { id: string }) => row.id === newGoal.id,
+    );
+    expect(json.syncedRevisions).toEqual([
+      { id: newGoal.id, updatedAt: stored.updatedAt },
+    ]);
+    expect(Date.parse(stored.updatedAt)).toBeGreaterThanOrEqual(
+      Date.parse(newGoal.updatedAt),
+    );
     expect(json.serverWins).toHaveLength(0);
     expect(json.skippedIds).toHaveLength(0);
   });

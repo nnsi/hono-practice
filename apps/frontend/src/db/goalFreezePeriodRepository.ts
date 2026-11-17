@@ -5,6 +5,7 @@ import {
 } from "@packages/frontend-shared/repositories";
 
 import { db } from "./schema";
+import { updateSyncStatusForRevisions } from "./syncStatus";
 
 const adapter: GoalFreezePeriodDbAdapter = {
   async getUserId() {
@@ -33,11 +34,8 @@ const adapter: GoalFreezePeriodDbAdapter = {
   async getByIds(ids) {
     return db.goalFreezePeriods.where("id").anyOf(ids).toArray();
   },
-  async updateSyncStatus(ids, status) {
-    await db.goalFreezePeriods
-      .where("id")
-      .anyOf(ids)
-      .modify({ _syncStatus: status });
+  async updateSyncStatus(revisions, status) {
+    await updateSyncStatusForRevisions(db.goalFreezePeriods, revisions, status);
   },
   async bulkUpsertSynced(periods) {
     await db.goalFreezePeriods.bulkPut(periods);

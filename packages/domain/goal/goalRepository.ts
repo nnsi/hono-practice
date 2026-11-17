@@ -1,4 +1,4 @@
-import type { Syncable } from "../sync/syncableRecord";
+import type { SyncRevision, Syncable } from "../sync/syncableRecord";
 import type { DayTargets } from "./dayTargets";
 import type { GoalRecord } from "./goalRecord";
 
@@ -32,7 +32,7 @@ export type GoalRepository = {
   updateGoal(id: string, changes: UpdateGoalInput): Promise<void>;
   softDeleteGoal(id: string): Promise<void>;
   getPendingSyncGoals(): Promise<Syncable<GoalRecord>[]>;
-  markGoalsSynced(ids: string[]): Promise<void>;
-  markGoalsFailed(ids: string[]): Promise<void>;
+  markGoalsSynced(revisions: SyncRevision[]): Promise<void>;
+  markGoalsFailed(revisions: SyncRevision[]): Promise<void>;
   upsertGoalsFromServer(goals: GoalRecord[]): Promise<void>;
 };

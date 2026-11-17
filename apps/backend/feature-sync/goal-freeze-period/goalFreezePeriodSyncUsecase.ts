@@ -1,14 +1,17 @@
 import type { activityGoalFreezePeriods } from "@infra/drizzle/schema";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertGoalFreezePeriodRequest } from "@packages/types";
+import type { SyncedRevision } from "@packages/types/sync/response/syncedRevision";
 
 import type { Tracer } from "../../lib/tracer";
+import { toSyncedRevisions } from "../shared/storedUpdatedAt";
 import type { GoalFreezePeriodSyncRepository } from "./goalFreezePeriodSyncRepository";
 
 type FreezePeriodRow = typeof activityGoalFreezePeriods.$inferSelect;
 
 export type SyncFreezePeriodsResult = {
   syncedIds: string[];
+  syncedRevisions: SyncedRevision[];
   serverWins: FreezePeriodRow[];
   skippedIds: string[];
 };
@@ -78,7 +81,7 @@ function syncFreezePeriods(
     });
 
     if (validPeriods.length === 0) {
-      return { syncedIds: [], serverWins: [], skippedIds };
+      return { syncedIds: [], syncedRevisions: [], serverWins: [], skippedIds };
     }
 
     const upserted = await tracer.span("db.upsertFreezePeriods", () =>
@@ -87,6 +90,7 @@ function syncFreezePeriods(
 
     const syncedIdSet = new Set(upserted.map((r) => r.id));
     const syncedIds = [...syncedIdSet];
+    const syncedRevisions = toSyncedRevisions(upserted);
 
     const missedIds = validPeriods
       .map((p) => p.id)
@@ -105,6 +109,6 @@ function syncFreezePeriods(
       }
     }
 
-    return { syncedIds, serverWins, skippedIds };
+    return { syncedIds, syncedRevisions, serverWins, skippedIds };
   };
 }

@@ -8,6 +8,8 @@ import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertTaskScheduleRequest } from "@packages/types";
 import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 
+import { withStoredUpdatedAt } from "../shared/storedUpdatedAt";
+
 type TaskScheduleRow = typeof taskSchedules.$inferSelect;
 
 export type ActivityKindWithActivityId = {
@@ -119,19 +121,19 @@ function upsertTaskSchedules(db: QueryExecutor) {
       .returning();
 
     const ids = rows.map((r) => r.id);
-    if (ids.length > 0) {
-      await db
-        .update(taskSchedules)
-        .set({ updatedAt: sql`NOW()` })
-        .where(
-          and(
-            inArray(taskSchedules.id, ids),
-            lt(taskSchedules.updatedAt, sql`NOW()`),
-          ),
-        );
-    }
+    if (ids.length === 0) return rows;
+    const bumped = await db
+      .update(taskSchedules)
+      .set({ updatedAt: sql`NOW()` })
+      .where(
+        and(
+          inArray(taskSchedules.id, ids),
+          lt(taskSchedules.updatedAt, sql`NOW()`),
+        ),
+      )
+      .returning();
 
-    return rows;
+    return withStoredUpdatedAt(rows, bumped);
   };
 }
 

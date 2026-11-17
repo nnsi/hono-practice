@@ -4,6 +4,8 @@ import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertActivityKindRequest } from "@packages/types";
 import { and, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 
+import { withStoredUpdatedAt } from "../shared/storedUpdatedAt";
+
 type ActivityKindRow = typeof activityKinds.$inferSelect;
 
 // userId 経由で kinds を取得する。GET /users/v2/activities で activities の SELECT 完了を
@@ -71,19 +73,19 @@ export function upsertActivityKinds(db: QueryExecutor) {
       .returning();
 
     const ids = rows.map((r) => r.id);
-    if (ids.length > 0) {
-      await db
-        .update(activityKinds)
-        .set({ updatedAt: sql`NOW()` })
-        .where(
-          and(
-            inArray(activityKinds.id, ids),
-            lt(activityKinds.updatedAt, sql`NOW()`),
-          ),
-        );
-    }
+    if (ids.length === 0) return rows;
+    const bumped = await db
+      .update(activityKinds)
+      .set({ updatedAt: sql`NOW()` })
+      .where(
+        and(
+          inArray(activityKinds.id, ids),
+          lt(activityKinds.updatedAt, sql`NOW()`),
+        ),
+      )
+      .returning();
 
-    return rows;
+    return withStoredUpdatedAt(rows, bumped);
   };
 }
 

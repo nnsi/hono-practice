@@ -5,6 +5,7 @@ import type { UpsertTaskRequest } from "@packages/types";
 import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 
 import { getOwnedTaskScheduleIds } from "../../feature/task/taskScheduleLinkRepository";
+import { withStoredUpdatedAt } from "../shared/storedUpdatedAt";
 
 type TaskRow = typeof tasks.$inferSelect;
 
@@ -109,14 +110,14 @@ function upsertTasks(db: QueryExecutor) {
       .returning();
 
     const ids = rows.map((r) => r.id);
-    if (ids.length > 0) {
-      await db
-        .update(tasks)
-        .set({ updatedAt: sql`NOW()` })
-        .where(and(inArray(tasks.id, ids), lt(tasks.updatedAt, sql`NOW()`)));
-    }
+    if (ids.length === 0) return rows;
+    const bumped = await db
+      .update(tasks)
+      .set({ updatedAt: sql`NOW()` })
+      .where(and(inArray(tasks.id, ids), lt(tasks.updatedAt, sql`NOW()`)))
+      .returning();
 
-    return rows;
+    return withStoredUpdatedAt(rows, bumped);
   };
 }
 

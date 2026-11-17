@@ -1,12 +1,13 @@
 import type { NoteRecord } from "@packages/domain/note/noteRecord";
 import type {
+  SyncRevision,
   SyncStatus,
   Syncable,
 } from "@packages/domain/sync/syncableRecord";
 import { getServerNowISOString } from "@packages/sync-engine";
 import { v7 as uuidv7 } from "uuid";
 
-import { filterSafeUpserts } from "./syncHelpers";
+import { filterSafeUpserts, markRevisionsSynced } from "./syncHelpers";
 
 export type NoteDbAdapter = {
   getUserId(): Promise<string>;
@@ -17,7 +18,10 @@ export type NoteDbAdapter = {
   getById(id: string): Promise<Syncable<NoteRecord> | undefined>;
   update(id: string, changes: Partial<Syncable<NoteRecord>>): Promise<void>;
   getByIds(ids: string[]): Promise<Syncable<NoteRecord>[]>;
-  updateSyncStatus(ids: string[], status: SyncStatus): Promise<void>;
+  updateSyncStatus(
+    revisions: SyncRevision[],
+    status: SyncStatus,
+  ): Promise<void>;
   bulkUpsertSynced(records: Syncable<NoteRecord>[]): Promise<void>;
 };
 
@@ -92,14 +96,13 @@ export function newNoteRepository(
       );
     },
 
-    async markNotesSynced(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateSyncStatus(ids, "synced");
+    async markNotesSynced(revisions: SyncRevision[]) {
+      await markRevisionsSynced(adapter, revisions);
     },
 
-    async markNotesFailed(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateSyncStatus(ids, "failed");
+    async markNotesFailed(revisions: SyncRevision[]) {
+      if (revisions.length === 0) return;
+      await adapter.updateSyncStatus(revisions, "failed");
     },
 
     async upsertNotesFromServer(notes: NoteRecord[]) {

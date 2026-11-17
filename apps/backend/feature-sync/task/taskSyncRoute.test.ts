@@ -69,6 +69,17 @@ describe("POST /users/v2/tasks/sync", () => {
 
     const json = await res.json();
     expect(json.syncedIds).toContain(newTask.id);
+    // 受理した行は、サーバーが繰り上げて保存した updatedAt と一緒に返す
+    const pulled = await (await getTasks(app)).json();
+    const stored = pulled.tasks.find(
+      (row: { id: string }) => row.id === newTask.id,
+    );
+    expect(json.syncedRevisions).toEqual([
+      { id: newTask.id, updatedAt: stored.updatedAt },
+    ]);
+    expect(Date.parse(stored.updatedAt)).toBeGreaterThanOrEqual(
+      Date.parse(newTask.updatedAt),
+    );
     expect(json.serverWins).toHaveLength(0);
     expect(json.skippedIds).toHaveLength(0);
   });

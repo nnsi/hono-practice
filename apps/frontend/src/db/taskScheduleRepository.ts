@@ -5,6 +5,7 @@ import {
 } from "@packages/frontend-shared/repositories";
 
 import { db } from "./schema";
+import { updateSyncStatusForRevisions } from "./syncStatus";
 
 const adapter: TaskScheduleDbAdapter = {
   async getUserId() {
@@ -26,11 +27,8 @@ const adapter: TaskScheduleDbAdapter = {
   async getByIds(ids) {
     return db.taskSchedules.where("id").anyOf(ids).toArray();
   },
-  async updateSyncStatus(ids, status) {
-    await db.taskSchedules
-      .where("id")
-      .anyOf(ids)
-      .modify({ _syncStatus: status });
+  async updateSyncStatus(revisions, status) {
+    await updateSyncStatusForRevisions(db.taskSchedules, revisions, status);
   },
   async bulkUpsertSynced(schedules) {
     await db.taskSchedules.bulkPut(schedules);
