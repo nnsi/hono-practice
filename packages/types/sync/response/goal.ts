@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { SyncedRevisionsSchema } from "./syncedRevision";
+
 const GoalRowSchema = z.object({
   id: z.string(),
   userId: z.string(),
@@ -30,6 +32,7 @@ export const GetGoalsV2ResponseSchema = z.object({
 
 export const SyncGoalsV2ResponseSchema = z.object({
   syncedIds: z.array(z.string()),
+  syncedRevisions: SyncedRevisionsSchema,
   serverWins: z.array(GoalRowSchema),
   skippedIds: z.array(z.string()),
 });

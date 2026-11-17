@@ -16,12 +16,54 @@ type SyncFunctions = {
 
 export type SyncErrorHandler = (error: unknown, phase: string) => void;
 
+/**
+ * 同じ同期関数の push を同時に 1 本だけにする。実行中に呼ばれたら、
+ * 終わってからもう一度だけ走らせる（実行中に入った編集を拾うため）。
+ *
+ * 同じ行の古い版と新しい版を並行して送ると、サーバーが先に受理した版より
+ * 「古い」と判定された応答が後から届き、新しいローカル編集と競合する。
+ */
+function singleFlight(fn: () => Promise<void>): () => Promise<void> {
+  let running: Promise<void> | null = null;
+  let rerunRequested = false;
+
+  return () => {
+    if (running) {
+      rerunRequested = true;
+      return running;
+    }
+    running = (async () => {
+      try {
+        do {
+          rerunRequested = false;
+          await fn();
+        } while (rerunRequested);
+      } finally {
+        running = null;
+      }
+    })();
+    return running;
+  };
+}
+
 export function createSyncEngine(
-  fns: SyncFunctions,
+  rawFns: SyncFunctions,
   defaultNetwork: NetworkAdapter,
   onSyncError?: SyncErrorHandler,
   mutex: SyncMutex = createSyncMutex(),
 ) {
+  // syncAll と個別呼び出し（syncEngine.syncTasks() 等）で同じ直列化を共有する
+  const fns: SyncFunctions = {
+    syncActivityIconDeletions: singleFlight(rawFns.syncActivityIconDeletions),
+    syncActivities: singleFlight(rawFns.syncActivities),
+    syncActivityIcons: singleFlight(rawFns.syncActivityIcons),
+    syncActivityLogs: singleFlight(rawFns.syncActivityLogs),
+    syncGoals: singleFlight(rawFns.syncGoals),
+    syncGoalFreezePeriods: singleFlight(rawFns.syncGoalFreezePeriods),
+    syncNotes: singleFlight(rawFns.syncNotes),
+    syncTasks: singleFlight(rawFns.syncTasks),
+    syncTaskSchedules: singleFlight(rawFns.syncTaskSchedules),
+  };
   let retryCount = 0;
   const BASE_DELAY_MS = 1000;
 

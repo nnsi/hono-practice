@@ -7,7 +7,10 @@ import type {
   ActivityIconDeleteQueueItem,
 } from "@packages/domain/activity/activityRepository";
 import type { Syncable } from "@packages/domain/sync/syncableRecord";
-import { resetServerTimeForTests } from "@packages/sync-engine";
+import {
+  resetServerTimeForTests,
+  trackServerTimestamps,
+} from "@packages/sync-engine";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ActivityDbAdapter } from "../activityRepositoryLogic";
@@ -626,6 +629,60 @@ describe("activityRepositoryLogic", () => {
       });
       expect(mem.activities.get(created.id)!.updatedAt).not.toBe(
         sentRevision.updatedAt,
+      );
+    });
+  });
+
+  describe("push の応答待ち中に編集された行", () => {
+    // サーバーは受理した版の updatedAt を自分の時刻へ繰り上げて保存する
+    const storedAt = () => new Date(Date.now() + 5_000).toISOString();
+
+    it("Activity は pending のまま、サーバーの保存時刻より後の updatedAt になる", async () => {
+      const created = await repo.createActivity({
+        name: "Before send",
+        quantityUnit: "km",
+        emoji: "\u{1F3C3}",
+        showCombinedStats: false,
+      });
+      const sentRevision = { id: created.id, updatedAt: created.updatedAt };
+      await repo.updateActivity(created.id, { name: "Edited while sending" });
+
+      const serverUpdatedAt = storedAt();
+      trackServerTimestamps([serverUpdatedAt]);
+      await repo.markActivitiesSynced([sentRevision]);
+
+      const local = mem.activities.get(created.id)!;
+      expect(local).toMatchObject({
+        name: "Edited while sending",
+        _syncStatus: "pending",
+      });
+      expect(Date.parse(local.updatedAt)).toBeGreaterThan(
+        Date.parse(serverUpdatedAt),
+      );
+    });
+
+    it("ActivityKind は pending のまま、サーバーの保存時刻より後の updatedAt になる", async () => {
+      const created = await repo.createActivity({
+        name: "Exercise",
+        quantityUnit: "sets",
+        emoji: "\u{1F4AA}",
+        showCombinedStats: false,
+        kinds: [{ name: "Push-ups", color: "#ff0000" }],
+      });
+      const kind = [...mem.kinds.values()][0];
+      const sentRevision = { id: kind.id, updatedAt: kind.updatedAt };
+      await repo.updateActivity(created.id, { name: "Exercise" }, [
+        { id: kind.id, name: "Pull-ups", color: "#00ff00" },
+      ]);
+
+      const serverUpdatedAt = storedAt();
+      trackServerTimestamps([serverUpdatedAt]);
+      await repo.markActivityKindsSynced([sentRevision]);
+
+      const local = mem.kinds.get(kind.id)!;
+      expect(local).toMatchObject({ name: "Pull-ups", _syncStatus: "pending" });
+      expect(Date.parse(local.updatedAt)).toBeGreaterThan(
+        Date.parse(serverUpdatedAt),
       );
     });
   });

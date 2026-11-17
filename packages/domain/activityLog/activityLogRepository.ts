@@ -1,4 +1,4 @@
-import type { Syncable } from "../sync/syncableRecord";
+import type { SyncRevision, Syncable } from "../sync/syncableRecord";
 import type { ActivityLogRecord } from "./activityLogRecord";
 
 type LocalActivityLogRecord = Omit<ActivityLogRecord, "userId">;
@@ -43,8 +43,8 @@ export type ActivityLogRepository = {
   softDeleteActivityLog(id: string): Promise<void>;
   softDeleteActivityLogByTaskId(taskId: string): Promise<void>;
   getPendingSyncActivityLogs(): Promise<Syncable<LocalActivityLogRecord>[]>;
-  markActivityLogsSynced(ids: string[]): Promise<void>;
-  markActivityLogsFailed(ids: string[]): Promise<void>;
+  markActivityLogsSynced(revisions: SyncRevision[]): Promise<void>;
+  markActivityLogsFailed(revisions: SyncRevision[]): Promise<void>;
   upsertActivityLogsFromServer(
     logs: UpsertActivityLogFromServerInput[],
   ): Promise<void>;

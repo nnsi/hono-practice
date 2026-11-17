@@ -5,6 +5,7 @@ import {
 } from "@packages/frontend-shared/repositories";
 
 import { db } from "./schema";
+import { updateSyncStatusForRevisions } from "./syncStatus";
 
 const adapter: ActivityLogDbAdapter = {
   async insert(log) {
@@ -33,11 +34,8 @@ const adapter: ActivityLogDbAdapter = {
   async getByIds(ids) {
     return db.activityLogs.where("id").anyOf(ids).toArray();
   },
-  async updateSyncStatus(ids, status) {
-    await db.activityLogs
-      .where("id")
-      .anyOf(ids)
-      .modify({ _syncStatus: status });
+  async updateSyncStatus(revisions, status) {
+    await updateSyncStatusForRevisions(db.activityLogs, revisions, status);
   },
   async bulkUpsertSynced(logs) {
     await db.activityLogs.bulkPut(logs);

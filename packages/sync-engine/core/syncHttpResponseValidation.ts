@@ -1,4 +1,9 @@
-import type { ServerEntity, SyncFailure, SyncResult } from "./syncResult";
+import type {
+  ServerEntity,
+  SyncFailure,
+  SyncResult,
+  SyncedRevision,
+} from "./syncResult";
 
 export type SyncPostResponse = {
   ok: boolean;
@@ -42,10 +47,21 @@ function isSyncFailure(value: unknown): value is SyncFailure {
   );
 }
 
+function isSyncedRevision(value: unknown): value is SyncedRevision {
+  return (
+    isUnknownRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.updatedAt === "string"
+  );
+}
+
 function isSyncResult(value: unknown): value is SyncResult {
   if (!isUnknownRecord(value)) return false;
   return (
     isStringArray(value.syncedIds) &&
+    (value.syncedRevisions === undefined ||
+      (Array.isArray(value.syncedRevisions) &&
+        value.syncedRevisions.every(isSyncedRevision))) &&
     isStringArray(value.skippedIds) &&
     Array.isArray(value.serverWins) &&
     value.serverWins.every(isServerEntity) &&

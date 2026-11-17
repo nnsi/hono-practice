@@ -91,6 +91,21 @@ describe("POST /users/v2/activities/sync", () => {
     // kind の activityId は新規activity → 所有権チェックでownedになるはず
     // 注意: kindの所有権チェックはupsert後のactivityを含むため新規activityも対象
     expect(json.activityKinds.syncedIds).toContain(newKind.id);
+
+    // 受理した行は、サーバーが繰り上げて保存した updatedAt と一緒に返す
+    const pulled = await (await getActivities(app)).json();
+    const storedActivity = pulled.activities.find(
+      (row: { id: string }) => row.id === newActivity.id,
+    );
+    const storedKind = pulled.activityKinds.find(
+      (row: { id: string }) => row.id === newKind.id,
+    );
+    expect(json.activities.syncedRevisions).toEqual([
+      { id: newActivity.id, updatedAt: storedActivity.updatedAt },
+    ]);
+    expect(json.activityKinds.syncedRevisions).toEqual([
+      { id: newKind.id, updatedAt: storedKind.updatedAt },
+    ]);
   });
 
   test("既存アクティビティの更新 (LWW - クライアント勝利)", async () => {

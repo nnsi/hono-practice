@@ -5,6 +5,7 @@ import {
 } from "@packages/frontend-shared/repositories";
 
 import { db } from "./schema";
+import { updateSyncStatusForRevisions } from "./syncStatus";
 
 const adapter: GoalDbAdapter = {
   async getUserId() {
@@ -26,8 +27,8 @@ const adapter: GoalDbAdapter = {
   async getByIds(ids) {
     return db.goals.where("id").anyOf(ids).toArray();
   },
-  async updateSyncStatus(ids, status) {
-    await db.goals.where("id").anyOf(ids).modify({ _syncStatus: status });
+  async updateSyncStatus(revisions, status) {
+    await updateSyncStatusForRevisions(db.goals, revisions, status);
   },
   async bulkUpsertSynced(goals) {
     await db.goals.bulkPut(goals);

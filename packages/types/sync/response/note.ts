@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { SyncedRevisionsSchema } from "./syncedRevision";
+
 const NoteRowSchema = z.object({
   id: z.string(),
   userId: z.string(),
@@ -17,6 +19,7 @@ export const GetNotesV2ResponseSchema = z.object({
 
 export const SyncNotesV2ResponseSchema = z.object({
   syncedIds: z.array(z.string()),
+  syncedRevisions: SyncedRevisionsSchema,
   serverWins: z.array(NoteRowSchema),
   skippedIds: z.array(z.string()),
 });

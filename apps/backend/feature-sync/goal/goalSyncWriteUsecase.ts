@@ -4,6 +4,7 @@ import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertGoalRequest } from "@packages/types";
 
 import type { Tracer } from "../../lib/tracer";
+import { toSyncedRevisions } from "../shared/storedUpdatedAt";
 import type { GoalSyncRepository } from "./goalSyncRepository";
 import type { SyncGoalsResult } from "./goalSyncUsecase";
 
@@ -35,7 +36,7 @@ export function syncGoals(repo: GoalSyncRepository, tracer: Tracer) {
     });
 
     if (validGoals.length === 0) {
-      return { syncedIds: [], serverWins: [], skippedIds };
+      return { syncedIds: [], syncedRevisions: [], serverWins: [], skippedIds };
     }
 
     const upserted = await tracer.span("db.upsertGoals", () =>
@@ -44,6 +45,7 @@ export function syncGoals(repo: GoalSyncRepository, tracer: Tracer) {
 
     const syncedIdSet = new Set(upserted.map((r) => r.id));
     const syncedIds = [...syncedIdSet];
+    const syncedRevisions = toSyncedRevisions(upserted);
 
     const missedIds = validGoals
       .map((g) => g.id)
@@ -67,6 +69,11 @@ export function syncGoals(repo: GoalSyncRepository, tracer: Tracer) {
       dayTargets: parseDayTargets(g.dayTargets),
     }));
 
-    return { syncedIds, serverWins: normalizedServerWins, skippedIds };
+    return {
+      syncedIds,
+      syncedRevisions,
+      serverWins: normalizedServerWins,
+      skippedIds,
+    };
   };
 }

@@ -7,6 +7,9 @@ export const serverEntitySchema = z
   .catchall(z.unknown());
 const syncResultSchema = z.object({
   syncedIds: z.array(z.string()),
+  syncedRevisions: z
+    .array(z.object({ id: z.string(), updatedAt: z.string() }))
+    .optional(),
   skippedIds: z.array(z.string()),
   serverWins: z.array(serverEntitySchema),
   failures: z

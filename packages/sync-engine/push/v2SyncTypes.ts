@@ -1,6 +1,8 @@
+import type { SyncRevision } from "@packages/domain/sync/syncableRecord";
 import type { UpsertGoalRequest } from "@packages/types/sync/request/goal";
 import type { UpsertTaskScheduleRequest } from "@packages/types/sync/request/taskSchedule";
 
+import type { PendingSyncRecord } from "../core/pushResult";
 import type {
   mapApiActivityLog,
   mapApiGoal,
@@ -11,7 +13,7 @@ import type {
 } from "../mappers/apiMappers";
 import type { TaskSchedulePending } from "./createSyncTaskSchedules";
 
-export type Pending = { _syncStatus: string };
+export type Pending = PendingSyncRecord;
 
 export type GoalPending = Pending & {
   currentBalance: unknown;
@@ -65,40 +67,40 @@ export type V2SyncRepos<
 > = {
   activityLog: {
     getPendingSyncActivityLogs: () => Promise<TLog[]>;
-    markActivityLogsSynced: (ids: string[]) => Promise<void>;
-    markActivityLogsFailed: (ids: string[]) => Promise<void>;
+    markActivityLogsSynced: (revisions: SyncRevision[]) => Promise<void>;
+    markActivityLogsFailed: (revisions: SyncRevision[]) => Promise<void>;
     upsertActivityLogsFromServer: (
       wins: ReturnType<typeof mapApiActivityLog>[],
     ) => Promise<void>;
   };
   goal: {
     getPendingSyncGoals: () => Promise<TGoal[]>;
-    markGoalsSynced: (ids: string[]) => Promise<void>;
-    markGoalsFailed: (ids: string[]) => Promise<void>;
+    markGoalsSynced: (revisions: SyncRevision[]) => Promise<void>;
+    markGoalsFailed: (revisions: SyncRevision[]) => Promise<void>;
     upsertGoalsFromServer: (
       wins: ReturnType<typeof mapApiGoal>[],
     ) => Promise<void>;
   };
   task: {
     getPendingSyncTasks: () => Promise<TTask[]>;
-    markTasksSynced: (ids: string[]) => Promise<void>;
-    markTasksFailed: (ids: string[]) => Promise<void>;
+    markTasksSynced: (revisions: SyncRevision[]) => Promise<void>;
+    markTasksFailed: (revisions: SyncRevision[]) => Promise<void>;
     upsertTasksFromServer: (
       wins: ReturnType<typeof mapApiTask>[],
     ) => Promise<void>;
   };
   note: {
     getPendingSyncNotes: () => Promise<TNote[]>;
-    markNotesSynced: (ids: string[]) => Promise<void>;
-    markNotesFailed: (ids: string[]) => Promise<void>;
+    markNotesSynced: (revisions: SyncRevision[]) => Promise<void>;
+    markNotesFailed: (revisions: SyncRevision[]) => Promise<void>;
     upsertNotesFromServer: (
       wins: ReturnType<typeof mapApiNote>[],
     ) => Promise<void>;
   };
   taskSchedule: {
     getPendingSyncTaskSchedules: () => Promise<TSchedule[]>;
-    markTaskSchedulesSynced: (ids: string[]) => Promise<void>;
-    markTaskSchedulesFailed: (ids: string[]) => Promise<void>;
+    markTaskSchedulesSynced: (revisions: SyncRevision[]) => Promise<void>;
+    markTaskSchedulesFailed: (revisions: SyncRevision[]) => Promise<void>;
     upsertTaskSchedulesFromServer: (
       wins: ReturnType<typeof mapApiTaskSchedule>[],
       sentSnapshots?: readonly { id: string; updatedAt: string }[],
@@ -106,8 +108,8 @@ export type V2SyncRepos<
   };
   goalFreezePeriod: {
     getPendingSyncFreezePeriods: () => Promise<TFreeze[]>;
-    markFreezePeriodsSynced: (ids: string[]) => Promise<void>;
-    markFreezePeriodsFailed: (ids: string[]) => Promise<void>;
+    markFreezePeriodsSynced: (revisions: SyncRevision[]) => Promise<void>;
+    markFreezePeriodsFailed: (revisions: SyncRevision[]) => Promise<void>;
     upsertFreezePeriodsFromServer: (
       wins: ReturnType<typeof mapApiGoalFreezePeriod>[],
     ) => Promise<void>;

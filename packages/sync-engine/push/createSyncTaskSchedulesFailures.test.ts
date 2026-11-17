@@ -10,6 +10,7 @@ describe("createSyncTaskSchedules", () => {
     deps.getPendingSyncTaskSchedules.mockResolvedValue(
       Array.from({ length: 101 }, (_, i) => ({
         id: `s${i}`,
+        updatedAt: "2026-09-10T00:00:00.000Z",
         _syncStatus: "failed",
       })),
     );
@@ -22,7 +23,7 @@ describe("createSyncTaskSchedules", () => {
       .mockRejectedValueOnce(new Error("offline"));
     await expect(createSyncTaskSchedules(deps)()).rejects.toThrow("offline");
     expect(deps.markTaskSchedulesSynced).toHaveBeenCalledExactlyOnceWith([
-      "s0",
+      { id: "s0", updatedAt: "2026-09-10T00:00:00.000Z" },
     ]);
   });
   it("aborts writes if generation changes after posting", async () => {

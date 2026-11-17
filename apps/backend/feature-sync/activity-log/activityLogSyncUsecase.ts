@@ -2,14 +2,17 @@ import type { activityLogs } from "@infra/drizzle/schema";
 import { validateActivityLogDate } from "@packages/domain/activityLog/activityLogValidation";
 import type { UserId } from "@packages/domain/user/userSchema";
 import type { UpsertActivityLogRequest } from "@packages/types";
+import type { SyncedRevision } from "@packages/types/sync/response/syncedRevision";
 
 import type { Tracer } from "../../lib/tracer";
+import { toSyncedRevisions } from "../shared/storedUpdatedAt";
 import type { ActivityLogSyncRepository } from "./activityLogSyncRepository";
 
 type ActivityLogRow = typeof activityLogs.$inferSelect;
 
 export type SyncActivityLogsResult = {
   syncedIds: string[];
+  syncedRevisions: SyncedRevision[];
   serverWins: ActivityLogRow[];
   skippedIds: string[];
 };
@@ -114,7 +117,7 @@ function syncActivityLogs(repo: ActivityLogSyncRepository, tracer: Tracer) {
     });
 
     if (validLogs.length === 0) {
-      return { syncedIds: [], serverWins: [], skippedIds };
+      return { syncedIds: [], syncedRevisions: [], serverWins: [], skippedIds };
     }
 
     const upserted = await tracer.span("db.upsertActivityLogs", () =>
@@ -123,6 +126,7 @@ function syncActivityLogs(repo: ActivityLogSyncRepository, tracer: Tracer) {
 
     const syncedIdSet = new Set(upserted.map((r) => r.id));
     const syncedIds = [...syncedIdSet];
+    const syncedRevisions = toSyncedRevisions(upserted);
 
     const missedIds = validLogs
       .map((l) => l.id)
@@ -141,6 +145,6 @@ function syncActivityLogs(repo: ActivityLogSyncRepository, tracer: Tracer) {
       }
     }
 
-    return { syncedIds, serverWins, skippedIds };
+    return { syncedIds, syncedRevisions, serverWins, skippedIds };
   };
 }

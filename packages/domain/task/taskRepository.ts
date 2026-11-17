@@ -1,4 +1,4 @@
-import type { Syncable } from "../sync/syncableRecord";
+import type { SyncRevision, Syncable } from "../sync/syncableRecord";
 import type { TaskRecord } from "./taskRecord";
 
 export type CreateTaskInput = {
@@ -40,7 +40,7 @@ export type TaskRepository = {
   archiveTask(id: string): Promise<void>;
   softDeleteTask(id: string): Promise<void>;
   getPendingSyncTasks(): Promise<Syncable<TaskRecord>[]>;
-  markTasksSynced(ids: string[]): Promise<void>;
-  markTasksFailed(ids: string[]): Promise<void>;
+  markTasksSynced(revisions: SyncRevision[]): Promise<void>;
+  markTasksFailed(revisions: SyncRevision[]): Promise<void>;
   upsertTasksFromServer(tasks: TaskRecord[]): Promise<void>;
 };

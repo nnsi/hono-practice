@@ -593,7 +593,10 @@ describe("activityRepository", () => {
   describe("markActivitiesSynced", () => {
     it("指定IDのActivitiesをsynced状態にする", async () => {
       const mockModify = vi.fn().mockResolvedValue(undefined);
-      const mockAnyOf = vi.fn().mockReturnValue({ modify: mockModify });
+      const mockAnyOf = vi.fn().mockReturnValue({
+        modify: mockModify,
+        toArray: vi.fn().mockResolvedValue([]),
+      });
       mockDb.activities.where.mockReturnValue({ anyOf: mockAnyOf });
 
       await activityRepository.markActivitiesSynced([
@@ -636,7 +639,10 @@ describe("activityRepository", () => {
   describe("markActivityKindsSynced", () => {
     it("指定IDのActivityKindsをsynced状態にする", async () => {
       const mockModify = vi.fn().mockResolvedValue(undefined);
-      const mockAnyOf = vi.fn().mockReturnValue({ modify: mockModify });
+      const mockAnyOf = vi.fn().mockReturnValue({
+        modify: mockModify,
+        toArray: vi.fn().mockResolvedValue([]),
+      });
       mockDb.activityKinds.where.mockReturnValue({ anyOf: mockAnyOf });
 
       await activityRepository.markActivityKindsSynced([

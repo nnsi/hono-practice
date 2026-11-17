@@ -4,8 +4,10 @@ import type {
   UpsertActivityKindRequest,
   UpsertActivityRequest,
 } from "@packages/types";
+import type { SyncedRevision } from "@packages/types/sync/response/syncedRevision";
 
 import type { Tracer } from "../../lib/tracer";
+import { toSyncedRevisions } from "../shared/storedUpdatedAt";
 import type { ActivitySyncRepository } from "./activitySyncRepository";
 
 type ActivityRow = typeof activities.$inferSelect;
@@ -13,6 +15,7 @@ type ActivityKindRow = typeof activityKinds.$inferSelect;
 
 export type SyncResult<T> = {
   syncedIds: string[];
+  syncedRevisions: SyncedRevision[];
   serverWins: T[];
   skippedIds: string[];
   failures: {
@@ -77,7 +80,13 @@ async function syncActivityEntities(
   });
 
   if (validActivities.length === 0) {
-    return { syncedIds: [], serverWins: [], skippedIds, failures: [] };
+    return {
+      syncedIds: [],
+      syncedRevisions: [],
+      serverWins: [],
+      skippedIds,
+      failures: [],
+    };
   }
 
   const upserted = await tracer.span("db.upsertActivities", () =>
@@ -86,6 +95,7 @@ async function syncActivityEntities(
 
   const syncedIdSet = new Set(upserted.map((r) => r.id));
   const syncedIds = [...syncedIdSet];
+  const syncedRevisions = toSyncedRevisions(upserted);
 
   const missedIds = validActivities
     .map((a) => a.id)
@@ -104,7 +114,7 @@ async function syncActivityEntities(
     }
   }
 
-  return { syncedIds, serverWins, skippedIds, failures: [] };
+  return { syncedIds, syncedRevisions, serverWins, skippedIds, failures: [] };
 }
 
 async function syncActivityKindEntities(
@@ -134,7 +144,13 @@ async function syncActivityKindEntities(
   });
 
   if (validKinds.length === 0) {
-    return { syncedIds: [], serverWins: [], skippedIds, failures: [] };
+    return {
+      syncedIds: [],
+      syncedRevisions: [],
+      serverWins: [],
+      skippedIds,
+      failures: [],
+    };
   }
 
   const upserted = await tracer.span("db.upsertActivityKinds", () =>
@@ -143,6 +159,7 @@ async function syncActivityKindEntities(
 
   const syncedIdSet = new Set(upserted.map((r) => r.id));
   const syncedIds = [...syncedIdSet];
+  const syncedRevisions = toSyncedRevisions(upserted);
 
   const missedIds = validKinds
     .map((k) => k.id)
@@ -161,5 +178,5 @@ async function syncActivityKindEntities(
     }
   }
 
-  return { syncedIds, serverWins, skippedIds, failures: [] };
+  return { syncedIds, syncedRevisions, serverWins, skippedIds, failures: [] };
 }

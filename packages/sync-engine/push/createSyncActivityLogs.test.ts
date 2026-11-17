@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invalidateSync } from "../core/syncState";
 import { createSyncActivityLogs } from "./createSyncActivityLogs";
 
+const UPDATED_AT = "2025-01-01T00:00:00.000Z";
+const rev = (id: string) => ({ id, updatedAt: UPDATED_AT });
+
 function createMockDeps() {
   return {
     getPendingSyncActivityLogs: vi.fn().mockResolvedValue([]),
@@ -64,7 +67,7 @@ describe("createSyncActivityLogs", () => {
   it("marks synced on success", async () => {
     const deps = createMockDeps();
     deps.getPendingSyncActivityLogs.mockResolvedValue([
-      { id: "l1", _syncStatus: "pending" },
+      { id: "l1", updatedAt: UPDATED_AT, _syncStatus: "pending" },
     ]);
     deps.postChunk.mockResolvedValue({
       syncedIds: ["l1"],
@@ -75,7 +78,7 @@ describe("createSyncActivityLogs", () => {
     const syncActivityLogs = createSyncActivityLogs(deps);
     await syncActivityLogs();
 
-    expect(deps.markActivityLogsSynced).toHaveBeenCalledWith(["l1"]);
+    expect(deps.markActivityLogsSynced).toHaveBeenCalledWith([rev("l1")]);
   });
 
   it("upserts serverWins via mapApiActivityLog", async () => {
@@ -94,7 +97,7 @@ describe("createSyncActivityLogs", () => {
       deleted_at: null,
     };
     deps.getPendingSyncActivityLogs.mockResolvedValue([
-      { id: "l1", _syncStatus: "pending" },
+      { id: "l1", updatedAt: UPDATED_AT, _syncStatus: "pending" },
     ]);
     deps.postChunk.mockResolvedValue({
       syncedIds: [],
@@ -114,8 +117,8 @@ describe("createSyncActivityLogs", () => {
   it("marks failed for skippedIds", async () => {
     const deps = createMockDeps();
     deps.getPendingSyncActivityLogs.mockResolvedValue([
-      { id: "l1", _syncStatus: "pending" },
-      { id: "l2", _syncStatus: "pending" },
+      { id: "l1", updatedAt: UPDATED_AT, _syncStatus: "pending" },
+      { id: "l2", updatedAt: UPDATED_AT, _syncStatus: "pending" },
     ]);
     deps.postChunk.mockResolvedValue({
       syncedIds: ["l1"],
@@ -126,14 +129,14 @@ describe("createSyncActivityLogs", () => {
     const syncActivityLogs = createSyncActivityLogs(deps);
     await syncActivityLogs();
 
-    expect(deps.markActivityLogsSynced).toHaveBeenCalledWith(["l1"]);
-    expect(deps.markActivityLogsFailed).toHaveBeenCalledWith(["l2"]);
+    expect(deps.markActivityLogsSynced).toHaveBeenCalledWith([rev("l1")]);
+    expect(deps.markActivityLogsFailed).toHaveBeenCalledWith([rev("l2")]);
   });
 
   it("throws when postChunk throws", async () => {
     const deps = createMockDeps();
     deps.getPendingSyncActivityLogs.mockResolvedValue([
-      { id: "l1", _syncStatus: "pending" },
+      { id: "l1", updatedAt: UPDATED_AT, _syncStatus: "pending" },
     ]);
     deps.postChunk.mockRejectedValue(new Error("syncActivityLogs failed: 500"));
 
@@ -148,6 +151,7 @@ describe("createSyncActivityLogs", () => {
     const deps = createMockDeps();
     const pending = Array.from({ length: 150 }, (_, i) => ({
       id: `l-${i}`,
+      updatedAt: UPDATED_AT,
       _syncStatus: "pending",
     }));
     deps.getPendingSyncActivityLogs.mockResolvedValue(pending);
@@ -169,6 +173,7 @@ describe("createSyncActivityLogs", () => {
     const deps = createMockDeps();
     const pending = Array.from({ length: 120 }, (_, i) => ({
       id: `l-${i}`,
+      updatedAt: UPDATED_AT,
       _syncStatus: "pending",
     }));
     deps.getPendingSyncActivityLogs.mockResolvedValue(pending);
@@ -201,24 +206,24 @@ describe("createSyncActivityLogs", () => {
     expect(deps.markActivityLogsSynced).toHaveBeenCalledTimes(2);
     expect(deps.markActivityLogsSynced).toHaveBeenNthCalledWith(
       1,
-      firstChunkSyncedIds,
+      firstChunkSyncedIds.map(rev),
     );
     expect(deps.markActivityLogsSynced).toHaveBeenNthCalledWith(
       2,
-      secondChunkSyncedIds,
+      secondChunkSyncedIds.map(rev),
     );
     expect(deps.markActivityLogsFailed).toHaveBeenCalledTimes(2);
     expect(deps.markActivityLogsFailed).toHaveBeenNthCalledWith(1, []);
     expect(deps.markActivityLogsFailed).toHaveBeenNthCalledWith(
       2,
-      secondChunkSkippedIds,
+      secondChunkSkippedIds.map(rev),
     );
   });
 
   it("skips DB writes when sync generation changes (H4)", async () => {
     const deps = createMockDeps();
     deps.getPendingSyncActivityLogs.mockResolvedValue([
-      { id: "l1", _syncStatus: "pending" },
+      { id: "l1", updatedAt: UPDATED_AT, _syncStatus: "pending" },
     ]);
     deps.postChunk.mockImplementation(async () => {
       invalidateSync();

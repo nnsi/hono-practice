@@ -12,7 +12,18 @@ describe("createSyncTaskSchedules", () => {
   it("strips status and handles synced, skipped and mapped server wins", async () => {
     const deps = createDeps();
     deps.getPendingSyncTaskSchedules.mockResolvedValue([
-      { id: "s1", _syncStatus: "pending", title: "Read" },
+      {
+        id: "s1",
+        updatedAt: "2026-09-10T00:00:00.000Z",
+        _syncStatus: "pending",
+        title: "Read",
+      },
+      {
+        id: "s2",
+        updatedAt: "2026-09-10T00:00:00.000Z",
+        _syncStatus: "pending",
+        title: "Run",
+      },
     ]);
     deps.postChunk.mockResolvedValue({
       syncedIds: ["s1"],
@@ -20,9 +31,16 @@ describe("createSyncTaskSchedules", () => {
       serverWins: [serverWin],
     });
     await createSyncTaskSchedules(deps)();
-    expect(deps.postChunk).toHaveBeenCalledWith([{ id: "s1", title: "Read" }]);
-    expect(deps.markTaskSchedulesSynced).toHaveBeenCalledWith(["s1"]);
-    expect(deps.markTaskSchedulesFailed).toHaveBeenCalledWith(["s2"]);
+    expect(deps.postChunk).toHaveBeenCalledWith([
+      { id: "s1", updatedAt: "2026-09-10T00:00:00.000Z", title: "Read" },
+      { id: "s2", updatedAt: "2026-09-10T00:00:00.000Z", title: "Run" },
+    ]);
+    expect(deps.markTaskSchedulesSynced).toHaveBeenCalledWith([
+      { id: "s1", updatedAt: "2026-09-10T00:00:00.000Z" },
+    ]);
+    expect(deps.markTaskSchedulesFailed).toHaveBeenCalledWith([
+      { id: "s2", updatedAt: "2026-09-10T00:00:00.000Z" },
+    ]);
     expect(deps.upsertTaskSchedulesFromServer).toHaveBeenCalledWith(
       [
         expect.objectContaining({
@@ -31,7 +49,10 @@ describe("createSyncTaskSchedules", () => {
           memo: null,
         }),
       ],
-      [{ id: "s1", title: "Read" }],
+      [
+        { id: "s1", updatedAt: "2026-09-10T00:00:00.000Z", title: "Read" },
+        { id: "s2", updatedAt: "2026-09-10T00:00:00.000Z", title: "Run" },
+      ],
     );
   });
   it("chunks at 100 and applies each chunk's server wins", async () => {

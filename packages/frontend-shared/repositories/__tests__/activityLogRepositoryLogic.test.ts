@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ActivityLogDbAdapter } from "../activityLogRepositoryLogic";
 import { newActivityLogRepository } from "../activityLogRepositoryLogic";
+import { revisionsOf } from "./syncRaceTestHelpers";
 
 const uuidState = { counter: 0 };
 const mockGenerateId = () => `mock-uuid-${++uuidState.counter}`;
@@ -42,10 +43,12 @@ function createInMemoryAdapter() {
         .map((id) => store.get(id))
         .filter((l): l is Syncable<LocalActivityLog> => l !== undefined);
     },
-    async updateSyncStatus(ids, status) {
-      for (const id of ids) {
-        const l = store.get(id);
-        if (l) store.set(id, { ...l, _syncStatus: status });
+    async updateSyncStatus(revisions, status) {
+      for (const revision of revisions) {
+        const current = store.get(revision.id);
+        if (current && current.updatedAt === revision.updatedAt) {
+          store.set(revision.id, { ...current, _syncStatus: status });
+        }
       }
     },
     async bulkUpsertSynced(logs) {
@@ -392,7 +395,7 @@ describe("activityLogRepositoryLogic", () => {
         _syncStatus: "pending",
       });
 
-      await repo.markActivityLogsSynced(["log-1", "log-2"]);
+      await repo.markActivityLogsSynced(revisionsOf(store, "log-1", "log-2"));
 
       expect(store.get("log-1")!._syncStatus).toBe("synced");
       expect(store.get("log-2")!._syncStatus).toBe("synced");
@@ -438,7 +441,7 @@ describe("activityLogRepositoryLogic", () => {
         _syncStatus: "pending",
       });
 
-      await repo.markActivityLogsFailed(["log-1"]);
+      await repo.markActivityLogsFailed(revisionsOf(store, "log-1"));
 
       expect(store.get("log-1")!._syncStatus).toBe("failed");
     });

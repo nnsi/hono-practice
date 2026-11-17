@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { SyncedRevisionsSchema } from "./syncedRevision";
+
 const TaskRowSchema = z.object({
   scheduleId: z.string().uuid().nullish(),
   scheduledDate: z.iso.date().nullish(),
@@ -23,6 +25,7 @@ export const GetTasksV2ResponseSchema = z.object({
 
 export const SyncTasksV2ResponseSchema = z.object({
   syncedIds: z.array(z.string()),
+  syncedRevisions: SyncedRevisionsSchema,
   serverWins: z.array(TaskRowSchema),
   skippedIds: z.array(z.string()),
 });

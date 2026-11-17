@@ -1,20 +1,23 @@
+import type { SyncRevision } from "@packages/domain/sync/syncableRecord";
+
 import { chunkArray } from "../core/chunkedSync";
+import {
+  type PendingSyncRecord,
+  revisionsForIds,
+  trackSyncResultTimestamps,
+} from "../core/pushResult";
 import { withSyncDataWrite } from "../core/syncDataWrites";
 import type { SyncResult } from "../core/syncResult";
 import { getSyncGeneration } from "../core/syncState";
 import { mapApiTaskSchedule } from "../mappers/apiMappers";
 
-export type TaskSchedulePending = {
-  _syncStatus: string;
-  id: string;
-  updatedAt: string;
-};
+export type TaskSchedulePending = PendingSyncRecord;
 
 type SyncTaskSchedulesDeps<T extends TaskSchedulePending> = {
   getPendingSyncTaskSchedules: () => Promise<T[]>;
   postChunk: (chunk: Omit<T, "_syncStatus">[]) => Promise<SyncResult>;
-  markTaskSchedulesSynced: (ids: string[]) => Promise<void>;
-  markTaskSchedulesFailed: (ids: string[]) => Promise<void>;
+  markTaskSchedulesSynced: (revisions: SyncRevision[]) => Promise<void>;
+  markTaskSchedulesFailed: (revisions: SyncRevision[]) => Promise<void>;
   upsertTaskSchedulesFromServer: (
     wins: ReturnType<typeof mapApiTaskSchedule>[],
     sentSnapshots?: readonly { id: string; updatedAt: string }[],
@@ -35,12 +38,17 @@ export function createSyncTaskSchedules<T extends TaskSchedulePending>(
     for (const chunk of chunks) {
       if (gen !== getSyncGeneration()) return;
       const data = await deps.postChunk(chunk);
+      trackSyncResultTimestamps(data);
 
       await withSyncDataWrite(gen, async () => {
         if (gen !== getSyncGeneration()) return;
-        await deps.markTaskSchedulesSynced(data.syncedIds);
+        await deps.markTaskSchedulesSynced(
+          revisionsForIds(pending, data.syncedIds),
+        );
         if (gen !== getSyncGeneration()) return;
-        await deps.markTaskSchedulesFailed(data.skippedIds);
+        await deps.markTaskSchedulesFailed(
+          revisionsForIds(pending, data.skippedIds),
+        );
         if (gen !== getSyncGeneration()) return;
         if (data.serverWins.length > 0) {
           await deps.upsertTaskSchedulesFromServer(

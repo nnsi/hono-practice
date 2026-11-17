@@ -5,13 +5,14 @@ import type {
   UpdateGoalInput,
 } from "@packages/domain/goal/goalRepository";
 import type {
+  SyncRevision,
   SyncStatus,
   Syncable,
 } from "@packages/domain/sync/syncableRecord";
 import { getServerNowISOString } from "@packages/sync-engine";
 import { v7 as uuidv7 } from "uuid";
 
-import { filterSafeUpserts } from "./syncHelpers";
+import { filterSafeUpserts, markRevisionsSynced } from "./syncHelpers";
 
 export type GoalDbAdapter = {
   getUserId(): Promise<string>;
@@ -21,7 +22,10 @@ export type GoalDbAdapter = {
   ): Promise<Syncable<GoalRecord>[]>;
   update(id: string, changes: Partial<Syncable<GoalRecord>>): Promise<void>;
   getByIds(ids: string[]): Promise<Syncable<GoalRecord>[]>;
-  updateSyncStatus(ids: string[], status: SyncStatus): Promise<void>;
+  updateSyncStatus(
+    revisions: SyncRevision[],
+    status: SyncStatus,
+  ): Promise<void>;
   bulkUpsertSynced(goals: Syncable<GoalRecord>[]): Promise<void>;
 };
 
@@ -85,14 +89,13 @@ export function newGoalRepository(
       );
     },
 
-    async markGoalsSynced(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateSyncStatus(ids, "synced");
+    async markGoalsSynced(revisions: SyncRevision[]) {
+      await markRevisionsSynced(adapter, revisions);
     },
 
-    async markGoalsFailed(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateSyncStatus(ids, "failed");
+    async markGoalsFailed(revisions: SyncRevision[]) {
+      if (revisions.length === 0) return;
+      await adapter.updateSyncStatus(revisions, "failed");
     },
 
     async upsertGoalsFromServer(goals: GoalRecord[]) {

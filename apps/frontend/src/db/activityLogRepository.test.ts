@@ -5,6 +5,8 @@ import {
 } from "@packages/frontend-shared/repositories";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { updateSyncStatusForRevisions } from "./syncStatus";
+
 const { mockDb } = vi.hoisted(() => {
   function createMockCollection() {
     return {
@@ -77,11 +79,14 @@ const adapter: ActivityLogDbAdapter = {
   async getByIds(ids) {
     return mockDb.activityLogs.where("id").anyOf(ids).toArray();
   },
-  async updateSyncStatus(ids, status) {
-    await mockDb.activityLogs
-      .where("id")
-      .anyOf(ids)
-      .modify({ _syncStatus: status });
+  async updateSyncStatus(revisions, status) {
+    await updateSyncStatusForRevisions(
+      mockDb.activityLogs as unknown as Parameters<
+        typeof updateSyncStatusForRevisions
+      >[0],
+      revisions,
+      status,
+    );
   },
   async bulkUpsertSynced(logs) {
     await mockDb.activityLogs.bulkPut(logs);
@@ -230,15 +235,48 @@ describe("activityLogRepository", () => {
 
   describe("markActivityLogsSynced", () => {
     it("指定IDのログをsynced状態にする", async () => {
-      const mockModify = vi.fn().mockResolvedValue(undefined);
-      const mockAnyOf = vi.fn().mockReturnValue({ modify: mockModify });
+      const records = [
+        {
+          id: "log-1",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          _syncStatus: "pending",
+        },
+        {
+          id: "log-2",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          _syncStatus: "pending",
+        },
+        {
+          id: "edited",
+          updatedAt: "2026-01-01T00:00:01.000Z",
+          _syncStatus: "pending",
+        },
+      ];
+      const mockModify = vi.fn(
+        async (callback: (value: (typeof records)[number]) => void) => {
+          for (const record of records) callback(record);
+        },
+      );
+      const mockAnyOf = vi.fn().mockReturnValue({
+        modify: mockModify,
+        toArray: vi.fn().mockResolvedValue([]),
+      });
       mockDb.activityLogs.where.mockReturnValue({ anyOf: mockAnyOf });
 
-      await activityLogRepository.markActivityLogsSynced(["log-1", "log-2"]);
+      await activityLogRepository.markActivityLogsSynced([
+        { id: "log-1", updatedAt: "2026-01-01T00:00:00.000Z" },
+        { id: "log-2", updatedAt: "2026-01-01T00:00:00.000Z" },
+        { id: "edited", updatedAt: "2026-01-01T00:00:00.000Z" },
+      ]);
 
       expect(mockDb.activityLogs.where).toHaveBeenCalledWith("id");
-      expect(mockAnyOf).toHaveBeenCalledWith(["log-1", "log-2"]);
-      expect(mockModify).toHaveBeenCalledWith({ _syncStatus: "synced" });
+      expect(mockAnyOf).toHaveBeenCalledWith(["log-1", "log-2", "edited"]);
+      // 送信した版から変わっていない行だけ状態が変わる
+      expect(records.map((record) => record._syncStatus)).toEqual([
+        "synced",
+        "synced",
+        "pending",
+      ]);
     });
 
     it("空配列の場合は何もしない", async () => {
@@ -249,15 +287,41 @@ describe("activityLogRepository", () => {
 
   describe("markActivityLogsFailed", () => {
     it("指定IDのログをfailed状態にする", async () => {
-      const mockModify = vi.fn().mockResolvedValue(undefined);
-      const mockAnyOf = vi.fn().mockReturnValue({ modify: mockModify });
+      const records = [
+        {
+          id: "log-1",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          _syncStatus: "pending",
+        },
+        {
+          id: "edited",
+          updatedAt: "2026-01-01T00:00:01.000Z",
+          _syncStatus: "pending",
+        },
+      ];
+      const mockModify = vi.fn(
+        async (callback: (value: (typeof records)[number]) => void) => {
+          for (const record of records) callback(record);
+        },
+      );
+      const mockAnyOf = vi.fn().mockReturnValue({
+        modify: mockModify,
+        toArray: vi.fn().mockResolvedValue([]),
+      });
       mockDb.activityLogs.where.mockReturnValue({ anyOf: mockAnyOf });
 
-      await activityLogRepository.markActivityLogsFailed(["log-1"]);
+      await activityLogRepository.markActivityLogsFailed([
+        { id: "log-1", updatedAt: "2026-01-01T00:00:00.000Z" },
+        { id: "edited", updatedAt: "2026-01-01T00:00:00.000Z" },
+      ]);
 
       expect(mockDb.activityLogs.where).toHaveBeenCalledWith("id");
-      expect(mockAnyOf).toHaveBeenCalledWith(["log-1"]);
-      expect(mockModify).toHaveBeenCalledWith({ _syncStatus: "failed" });
+      expect(mockAnyOf).toHaveBeenCalledWith(["log-1", "edited"]);
+      // 送信した版から変わっていない行だけ状態が変わる
+      expect(records.map((record) => record._syncStatus)).toEqual([
+        "failed",
+        "pending",
+      ]);
     });
 
     it("空配列の場合は何もしない", async () => {

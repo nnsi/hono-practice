@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invalidateSync } from "../core/syncState";
 import { createSyncGoals } from "./createSyncGoals";
 
+const UPDATED_AT = "2025-01-01T00:00:00.000Z";
+const rev = (id: string) => ({ id, updatedAt: UPDATED_AT });
+
 function createMockDeps() {
   return {
     getPendingSyncGoals: vi.fn().mockResolvedValue([]),
@@ -75,6 +78,15 @@ describe("createSyncGoals", () => {
     deps.getPendingSyncGoals.mockResolvedValue([
       {
         id: "g1",
+        updatedAt: UPDATED_AT,
+        _syncStatus: "pending",
+        currentBalance: 0,
+        totalTarget: 0,
+        totalActual: 0,
+      },
+      {
+        id: "g3",
+        updatedAt: UPDATED_AT,
         _syncStatus: "pending",
         currentBalance: 0,
         totalTarget: 0,
@@ -109,8 +121,8 @@ describe("createSyncGoals", () => {
     const syncGoals = createSyncGoals(deps);
     await syncGoals();
 
-    expect(deps.markGoalsSynced).toHaveBeenCalledWith(["g1"]);
-    expect(deps.markGoalsFailed).toHaveBeenCalledWith(["g3"]);
+    expect(deps.markGoalsSynced).toHaveBeenCalledWith([rev("g1")]);
+    expect(deps.markGoalsFailed).toHaveBeenCalledWith([rev("g3")]);
     expect(deps.upsertGoalsFromServer).toHaveBeenCalledTimes(1);
   });
 
@@ -137,6 +149,7 @@ describe("createSyncGoals", () => {
     const deps = createMockDeps();
     const pending = Array.from({ length: 150 }, (_, i) => ({
       id: `g-${i}`,
+      updatedAt: UPDATED_AT,
       _syncStatus: "pending",
       currentBalance: 0,
       totalTarget: 0,
@@ -156,6 +169,7 @@ describe("createSyncGoals", () => {
     const deps = createMockDeps();
     const pending = Array.from({ length: 100 }, (_, i) => ({
       id: `g-${i}`,
+      updatedAt: UPDATED_AT,
       activityId: "a1",
       _syncStatus: "pending",
       currentBalance: 0,
@@ -175,6 +189,7 @@ describe("createSyncGoals", () => {
     const deps = createMockDeps();
     const pending = Array.from({ length: 150 }, (_, i) => ({
       id: `g-${i}`,
+      updatedAt: UPDATED_AT,
       activityId: "a1",
       _syncStatus: "pending",
       currentBalance: 0,

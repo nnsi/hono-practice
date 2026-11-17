@@ -5,13 +5,14 @@ import type {
   UpsertActivityLogFromServerInput,
 } from "@packages/domain/activityLog/activityLogRepository";
 import type {
+  SyncRevision,
   SyncStatus,
   Syncable,
 } from "@packages/domain/sync/syncableRecord";
 import { getServerNowISOString } from "@packages/sync-engine";
 import { v7 as uuidv7 } from "uuid";
 
-import { filterSafeUpserts } from "./syncHelpers";
+import { filterSafeUpserts, markRevisionsSynced } from "./syncHelpers";
 
 type LocalActivityLog = Omit<ActivityLogRecord, "userId">;
 
@@ -30,7 +31,10 @@ export type ActivityLogDbAdapter = {
     changes: Partial<Syncable<LocalActivityLog>>,
   ): Promise<void>;
   getByIds(ids: string[]): Promise<Syncable<LocalActivityLog>[]>;
-  updateSyncStatus(ids: string[], status: SyncStatus): Promise<void>;
+  updateSyncStatus(
+    revisions: SyncRevision[],
+    status: SyncStatus,
+  ): Promise<void>;
   bulkUpsertSynced(logs: Syncable<LocalActivityLog>[]): Promise<void>;
 };
 
@@ -107,14 +111,13 @@ export function newActivityLogRepository(
       );
     },
 
-    async markActivityLogsSynced(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateSyncStatus(ids, "synced");
+    async markActivityLogsSynced(revisions: SyncRevision[]) {
+      await markRevisionsSynced(adapter, revisions);
     },
 
-    async markActivityLogsFailed(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateSyncStatus(ids, "failed");
+    async markActivityLogsFailed(revisions: SyncRevision[]) {
+      if (revisions.length === 0) return;
+      await adapter.updateSyncStatus(revisions, "failed");
     },
 
     async upsertActivityLogsFromServer(

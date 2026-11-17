@@ -1,4 +1,5 @@
 import type {
+  SyncRevision,
   SyncStatus,
   Syncable,
 } from "@packages/domain/sync/syncableRecord";
@@ -12,7 +13,7 @@ import type {
 import { getServerNowISOString } from "@packages/sync-engine";
 import { v7 as uuidv7 } from "uuid";
 
-import { filterSafeUpserts } from "./syncHelpers";
+import { filterSafeUpserts, markRevisionsSynced } from "./syncHelpers";
 
 export type ScheduledTaskRepository = TaskRepository & {
   getTasksByScheduledDate(
@@ -33,7 +34,10 @@ export type TaskDbAdapter = {
   ): Promise<Syncable<TaskRecord>[]>;
   update(id: string, changes: Partial<Syncable<TaskRecord>>): Promise<void>;
   getByIds(ids: string[]): Promise<Syncable<TaskRecord>[]>;
-  updateSyncStatus(ids: string[], status: SyncStatus): Promise<void>;
+  updateSyncStatus(
+    revisions: SyncRevision[],
+    status: SyncStatus,
+  ): Promise<void>;
   bulkUpsertSynced(tasks: Syncable<TaskRecord>[]): Promise<void>;
 };
 
@@ -125,14 +129,13 @@ export function newTaskRepository(
       );
     },
 
-    async markTasksSynced(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateSyncStatus(ids, "synced");
+    async markTasksSynced(revisions: SyncRevision[]) {
+      await markRevisionsSynced(adapter, revisions);
     },
 
-    async markTasksFailed(ids: string[]) {
-      if (ids.length === 0) return;
-      await adapter.updateSyncStatus(ids, "failed");
+    async markTasksFailed(revisions: SyncRevision[]) {
+      if (revisions.length === 0) return;
+      await adapter.updateSyncStatus(revisions, "failed");
     },
 
     async upsertTasksFromServer(tasks: TaskRecord[]) {

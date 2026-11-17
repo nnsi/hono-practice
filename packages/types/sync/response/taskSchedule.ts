@@ -1,6 +1,8 @@
 import { taskScheduleDataSchema } from "@packages/domain/taskSchedule";
 import { z } from "zod";
 
+import { SyncedRevisionsSchema } from "./syncedRevision";
+
 const TaskScheduleRowSchema = taskScheduleDataSchema.and(
   z.object({
     id: z.string(),
@@ -15,6 +17,7 @@ export const GetTaskSchedulesV2ResponseSchema = z.object({
 });
 export const SyncTaskSchedulesV2ResponseSchema = z.object({
   syncedIds: z.array(z.string()),
+  syncedRevisions: SyncedRevisionsSchema,
   serverWins: z.array(TaskScheduleRowSchema),
   skippedIds: z.array(z.string()),
 });
